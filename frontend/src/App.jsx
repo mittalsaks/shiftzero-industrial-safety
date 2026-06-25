@@ -315,7 +315,7 @@ function PermitsTab({ liveState }) {
   const [closing, setClosing] = useState(null);
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/permits').then(r => r.json()).then(setPermits);
+    fetch(`${BACKEND_URL}/api/permits`).then(r => r.json()).then(setPermits);
     socket.on('permitsUpdate', setPermits);
     return () => socket.off('permitsUpdate');
   }, []);
@@ -325,7 +325,7 @@ function PermitsTab({ liveState }) {
   const issuePermit = async () => {
     if (!newPermit.zone || !newPermit.issuedBy || !newPermit.description) return;
     setSubmitting(true);
-    await fetch(`${BACKEND_URL}/api/permits', {
+    await fetch(`${BACKEND_URL}/api/permits`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newPermit)
@@ -545,7 +545,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetch(`${BACKEND_URL}/api/state').then(r => r.json()).then(setState);
+    fetch(`${BACKEND_URL}/api/state`).then(r => r.json()).then(setState);
     socket.on('stateUpdate', setState);
     socket.on('alert', (a) => setAlerts(prev => [a, ...prev].slice(0, 20)));
     return () => { socket.off('stateUpdate'); socket.off('alert'); };
@@ -562,7 +562,7 @@ export default function App() {
   const submitHandover = async () => {
     if (!note.trim()) return;
     setSubmitting(true);
-    await fetch(`${BACKEND_URL}/api/handover', {
+    await fetch(`${BACKEND_URL}/api/handover`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ zone, text: note })
