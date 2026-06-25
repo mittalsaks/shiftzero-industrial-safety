@@ -614,7 +614,6 @@ export default function App() {
         </nav>
         <div className="sidebar-footer">
           <div className="user-chip">
-            // ✅ Fix — img tag use karo
               <div className="user-avatar">
                 <img 
                   src={user.avatar} 
