@@ -1,12 +1,13 @@
+﻿const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 import { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import PlantGeospatialView from './PlantGeospatialView';
 import LandingPage from './LandingPage';
 import './App.css';
 
-const socket = io('http://localhost:5000');
+const socket = io(BACKEND_URL);
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function riskColor(score) {
   if (score >= 60) return '#ff3a3a';
@@ -20,10 +21,10 @@ function riskLabel(score) {
   return 'NOMINAL';
 }
 
-// ── Sparkline (SVG mini-chart from real history) ──────────────────────────────
+// â”€â”€ Sparkline (SVG mini-chart from real history) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function Sparkline({ history, field = 'riskLevel', color }) {
-  if (!history || history.length < 2) return <div className="sparkline-empty">–</div>;
+  if (!history || history.length < 2) return <div className="sparkline-empty">â€“</div>;
   const vals = history.map(h => h[field]);
   const min = Math.min(...vals);
   const max = Math.max(...vals) || 1;
@@ -42,7 +43,7 @@ function Sparkline({ history, field = 'riskLevel', color }) {
   );
 }
 
-// ── Risk Arc gauge ────────────────────────────────────────────────────────────
+// â”€â”€ Risk Arc gauge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function RiskArc({ score }) {
   const r = 28, cx = 36, cy = 36;
@@ -63,33 +64,33 @@ function RiskArc({ score }) {
   );
 }
 
-// ── Time-to-Critical pill ─────────────────────────────────────────────────────
+// â”€â”€ Time-to-Critical pill â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function TimeToCritical({ prediction }) {
   if (!prediction || !prediction.confident || prediction.minutesToCritical === null) return null;
   if (prediction.minutesToCritical === 0) return (
-    <div className="ttc-pill ttc-now">⚠ CRITICAL NOW</div>
+    <div className="ttc-pill ttc-now">âš  CRITICAL NOW</div>
   );
   return (
     <div className={`ttc-pill ${prediction.minutesToCritical <= 5 ? 'ttc-urgent' : 'ttc-warn'}`}>
-      ⏱ CRITICAL IN ~{prediction.minutesToCritical}min
+      â± CRITICAL IN ~{prediction.minutesToCritical}min
     </div>
   );
 }
 
-// ── Permit conflict badge ─────────────────────────────────────────────────────
+// â”€â”€ Permit conflict badge â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function PermitConflictBadge({ conflicts }) {
   if (!conflicts || conflicts.length === 0) return null;
   const worst = conflicts.find(c => c.severity === 'CRITICAL') || conflicts[0];
   return (
     <div className={`permit-conflict-badge ${worst.severity === 'CRITICAL' ? 'perm-critical' : 'perm-high'}`}>
-      🔒 PTW CONFLICT: {worst.permitType}
+      ðŸ”’ PTW CONFLICT: {worst.permitType}
     </div>
   );
 }
 
-// ── Zone Card (enhanced) ─────────────────────────────────────────────────────
+// â”€â”€ Zone Card (enhanced) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ZoneCard({ z, onClick }) {
   const color = riskColor(z.mismatchScore);
@@ -117,7 +118,7 @@ function ZoneCard({ z, onClick }) {
         </div>
         <div className="sensor-item">
           <span className="sensor-label">TEMP</span>
-          <span className="sensor-value">{z.sensor.tempC}° <span className="sensor-unit">C</span></span>
+          <span className="sensor-value">{z.sensor.tempC}Â° <span className="sensor-unit">C</span></span>
         </div>
         <div className="sensor-item">
           <span className="sensor-label">RISK</span>
@@ -147,16 +148,16 @@ function ZoneCard({ z, onClick }) {
         <PermitConflictBadge conflicts={z.permitConflicts} />
         {z.activePermits?.length > 0 && (
           <div className="active-permit-badge">
-            🔑 {z.activePermits.length} ACTIVE PERMIT{z.activePermits.length > 1 ? 'S' : ''}
+            ðŸ”‘ {z.activePermits.length} ACTIVE PERMIT{z.activePermits.length > 1 ? 'S' : ''}
           </div>
         )}
-        {isCritical && <div className="zone-alert-badge">⚠ VERBAL-SENSOR MISMATCH</div>}
+        {isCritical && <div className="zone-alert-badge">âš  VERBAL-SENSOR MISMATCH</div>}
       </div>
     </div>
   );
 }
 
-// ── Zone Detail Modal ─────────────────────────────────────────────────────────
+// â”€â”€ Zone Detail Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function ZoneModal({ z, onClose }) {
   if (!z) return null;
@@ -169,7 +170,7 @@ function ZoneModal({ z, onClose }) {
             <div className="modal-zone-name">{z.zone}</div>
             <div className="modal-zone-status" style={{ color }}>{riskLabel(z.mismatchScore)}</div>
           </div>
-          <button className="modal-close" onClick={onClose}>✕</button>
+          <button className="modal-close" onClick={onClose}>âœ•</button>
         </div>
 
         <div className="modal-body">
@@ -178,7 +179,7 @@ function ZoneModal({ z, onClose }) {
           <div className="modal-sensor-grid">
             {[
               { label: 'Gas Level', value: `${z.sensor.gasPpm} ppm`, warn: z.sensor.gasPpm > 30 },
-              { label: 'Temperature', value: `${z.sensor.tempC}°C`, warn: z.sensor.tempC > 55 },
+              { label: 'Temperature', value: `${z.sensor.tempC}Â°C`, warn: z.sensor.tempC > 55 },
               { label: 'Risk Level', value: `${(z.sensor.riskLevel * 100).toFixed(0)}%`, warn: z.sensor.riskLevel > 0.5 },
               { label: 'Trend Velocity', value: z.sensor.trendVelocity, warn: z.sensor.trendVelocity > 0.4 },
             ].map(s => (
@@ -194,9 +195,9 @@ function ZoneModal({ z, onClose }) {
             <div className="modal-prediction">
               <div className="modal-section-label">RISK PREDICTION</div>
               <div className="prediction-box" style={{ borderColor: color }}>
-                <span className="pred-icon">⏱</span>
+                <span className="pred-icon">â±</span>
                 {z.prediction.minutesToCritical === 0
-                  ? 'Zone is at CRITICAL level now — immediate action required'
+                  ? 'Zone is at CRITICAL level now â€” immediate action required'
                   : `At current escalation rate, ${z.zone} will reach CRITICAL in ~${z.prediction.minutesToCritical} minutes`
                 }
               </div>
@@ -215,7 +216,7 @@ function ZoneModal({ z, onClose }) {
               <MiniChart history={z.history} field="riskLevel" color="#ffaa00" />
             </div>
             <div className="modal-chart-block">
-              <div className="chart-label">Temperature (°C)</div>
+              <div className="chart-label">Temperature (Â°C)</div>
               <MiniChart history={z.history} field="tempC" color="#00c8ff" />
             </div>
           </div>
@@ -239,11 +240,11 @@ function ZoneModal({ z, onClose }) {
           {/* Permit conflicts */}
           {z.permitConflicts?.length > 0 && (
             <>
-              <div className="modal-section-label">⚠ PERMIT CONFLICTS</div>
+              <div className="modal-section-label">âš  PERMIT CONFLICTS</div>
               {z.permitConflicts.map(c => (
                 <div key={c.permitId} className={`conflict-card ${c.severity === 'CRITICAL' ? 'conf-critical' : 'conf-high'}`}>
                   <div className="conflict-header">
-                    <span className="conf-permit">{c.permitId} · {c.permitType}</span>
+                    <span className="conf-permit">{c.permitId} Â· {c.permitType}</span>
                     <span className={`conf-sev sev-${c.severity}`}>{c.severity}</span>
                   </div>
                   <div className="conflict-reason">{c.reason}</div>
@@ -260,7 +261,7 @@ function ZoneModal({ z, onClose }) {
                 <div className="hov-quote">"{z.lastHandover.text}"</div>
                 <div className="hov-meta">
                   Risk language score: <strong>{(z.lastHandover.riskLanguageScore * 100).toFixed(0)}%</strong>
-                  · Submitted {new Date(z.lastHandover.timestamp).toLocaleTimeString('en-IN')}
+                  Â· Submitted {new Date(z.lastHandover.timestamp).toLocaleTimeString('en-IN')}
                 </div>
               </div>
             </>
@@ -271,7 +272,7 @@ function ZoneModal({ z, onClose }) {
   );
 }
 
-// ── Full mini-chart for modal ─────────────────────────────────────────────────
+// â”€â”€ Full mini-chart for modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function MiniChart({ history, field, color }) {
   if (!history || history.length < 2) return <div className="minichart-empty">No data yet</div>;
@@ -305,7 +306,7 @@ function MiniChart({ history, field, color }) {
   );
 }
 
-// ── Permits Tab ───────────────────────────────────────────────────────────────
+// â”€â”€ Permits Tab â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function PermitsTab({ liveState }) {
   const [permits, setPermits] = useState([]);
@@ -314,7 +315,7 @@ function PermitsTab({ liveState }) {
   const [closing, setClosing] = useState(null);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/permits').then(r => r.json()).then(setPermits);
+    fetch(`${BACKEND_URL}/api/permits').then(r => r.json()).then(setPermits);
     socket.on('permitsUpdate', setPermits);
     return () => socket.off('permitsUpdate');
   }, []);
@@ -324,7 +325,7 @@ function PermitsTab({ liveState }) {
   const issuePermit = async () => {
     if (!newPermit.zone || !newPermit.issuedBy || !newPermit.description) return;
     setSubmitting(true);
-    await fetch('http://localhost:5000/api/permits', {
+    await fetch(`${BACKEND_URL}/api/permits', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(newPermit)
@@ -335,7 +336,7 @@ function PermitsTab({ liveState }) {
 
   const closePermit = async (id) => {
     setClosing(id);
-    await fetch(`http://localhost:5000/api/permits/${id}/close`, { method: 'PATCH' });
+    await fetch(`${BACKEND_URL}/api/permits/${id}/close`, { method: 'PATCH' });
     setClosing(null);
   };
 
@@ -350,12 +351,12 @@ function PermitsTab({ liveState }) {
       {/* Conflict banner */}
       {allConflicts.length > 0 && (
         <div className="permit-conflict-banner">
-          <span className="pcb-icon">⚠</span>
+          <span className="pcb-icon">âš </span>
           <div>
             <strong>{allConflicts.length} PERMIT CONFLICT{allConflicts.length > 1 ? 'S' : ''} DETECTED</strong>
             {allConflicts.map(c => (
               <div key={c.permitId} className="pcb-detail">
-                [{c.zone}] {c.permitId} — {c.reason.slice(0, 100)}…
+                [{c.zone}] {c.permitId} â€” {c.reason.slice(0, 100)}â€¦
               </div>
             ))}
           </div>
@@ -387,17 +388,17 @@ function PermitsTab({ liveState }) {
                   </div>
                   <div className="permit-desc-text">{p.description}</div>
                   <div className="permit-meta">
-                    Issued by {p.issuedBy} · {new Date(p.issuedAt).toLocaleTimeString('en-IN')}
+                    Issued by {p.issuedBy} Â· {new Date(p.issuedAt).toLocaleTimeString('en-IN')}
                   </div>
                   {conflict && (
-                    <div className="permit-conflict-inline">⚠ {conflict.reason}</div>
+                    <div className="permit-conflict-inline">âš  {conflict.reason}</div>
                   )}
                   <button
                     className="close-permit-btn"
                     onClick={() => closePermit(p.id)}
                     disabled={closing === p.id}
                   >
-                    {closing === p.id ? 'Closing…' : '✕ Close Permit'}
+                    {closing === p.id ? 'Closingâ€¦' : 'âœ• Close Permit'}
                   </button>
                 </div>
               );
@@ -417,7 +418,7 @@ function PermitsTab({ liveState }) {
                     <span className="permit-id-tag" style={{ opacity: 0.5 }}>{p.id}</span>
                     <span className="closed-tag">CLOSED</span>
                   </div>
-                  <div className="permit-desc-text" style={{ opacity: 0.5 }}>{p.description} — {p.zone}</div>
+                  <div className="permit-desc-text" style={{ opacity: 0.5 }}>{p.description} â€” {p.zone}</div>
                 </div>
               ))}
             </>
@@ -433,7 +434,7 @@ function PermitsTab({ liveState }) {
             <div className="form-group">
               <label className="form-label">ZONE</label>
               <select className="form-select" value={newPermit.zone} onChange={e => setNewPermit(p => ({ ...p, zone: e.target.value }))}>
-                <option value="">— select zone —</option>
+                <option value="">â€” select zone â€”</option>
                 {allZones.map(z => <option key={z} value={z}>{z}</option>)}
               </select>
             </div>
@@ -471,7 +472,7 @@ function PermitsTab({ liveState }) {
               onClick={issuePermit}
               disabled={submitting || !newPermit.zone || !newPermit.issuedBy || !newPermit.description}
             >
-              {submitting ? <><span className="spin-icon">◌</span> Issuing…</> : '+ ISSUE PERMIT'}
+              {submitting ? <><span className="spin-icon">â—Œ</span> Issuingâ€¦</> : '+ ISSUE PERMIT'}
             </button>
             <div className="ptw-note">
               Permits are auto-cross-checked against live sensor data. Hot Work + elevated gas readings will trigger an immediate conflict alert.
@@ -483,7 +484,7 @@ function PermitsTab({ liveState }) {
   );
 }
 
-// ── Alert Card ────────────────────────────────────────────────────────────────
+// â”€â”€ Alert Card â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 function AlertCard({ a }) {
   return (
@@ -498,16 +499,16 @@ function AlertCard({ a }) {
       <div className="alert-message">{a.alert?.message}</div>
       {a.alert?.recommendation && (
         <div className="alert-rec">
-          <div className="rec-label">⬡ AI RECOMMENDATION</div>
+          <div className="rec-label">â¬¡ AI RECOMMENDATION</div>
           <div className="rec-text">{a.alert.recommendation}</div>
         </div>
       )}
       {a.alert?.permitConflicts?.length > 0 && (
         <div className="alert-permits-section">
-          <div className="rec-label">🔒 PERMIT CONFLICTS IN THIS ALERT</div>
+          <div className="rec-label">ðŸ”’ PERMIT CONFLICTS IN THIS ALERT</div>
           {a.alert.permitConflicts.map(c => (
             <div key={c.permitId} className={`conflict-card conf-inline ${c.severity === 'CRITICAL' ? 'conf-critical' : 'conf-high'}`}>
-              <span className="conf-permit">{c.permitId} · {c.permitType}</span>
+              <span className="conf-permit">{c.permitId} Â· {c.permitType}</span>
               <span className={`conf-sev sev-${c.severity}`}>{c.severity}</span>
               <div className="conflict-reason">{c.reason}</div>
             </div>
@@ -517,7 +518,7 @@ function AlertCard({ a }) {
       {a.alert?.matchedIncidents?.length > 0 && (
         <div className="matched-row">
           {a.alert.matchedIncidents.map(m => (
-            <span key={m.id} className="inc-tag">{m.id} · {m.title}</span>
+            <span key={m.id} className="inc-tag">{m.id} Â· {m.title}</span>
           ))}
         </div>
       )}
@@ -525,7 +526,7 @@ function AlertCard({ a }) {
   );
 }
 
-// ── Main App ──────────────────────────────────────────────────────────────────
+// â”€â”€ Main App â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -544,7 +545,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    fetch('http://localhost:5000/api/state').then(r => r.json()).then(setState);
+    fetch(`${BACKEND_URL}/api/state').then(r => r.json()).then(setState);
     socket.on('stateUpdate', setState);
     socket.on('alert', (a) => setAlerts(prev => [a, ...prev].slice(0, 20)));
     return () => { socket.off('stateUpdate'); socket.off('alert'); };
@@ -561,7 +562,7 @@ export default function App() {
   const submitHandover = async () => {
     if (!note.trim()) return;
     setSubmitting(true);
-    await fetch('http://localhost:5000/api/handover', {
+    await fetch(`${BACKEND_URL}/api/handover', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ zone, text: note })
@@ -577,11 +578,11 @@ export default function App() {
   const totalPermitConflicts = state.reduce((a, z) => a + (z.permitConflicts?.length || 0), 0);
 
   const tabs = [
-    { id: 'dashboard', icon: '⬡', label: 'Dashboard' },
-    { id: 'handover', icon: '✍', label: 'Handover' },
-    { id: 'alerts', icon: '⚡', label: `Alerts${alerts.length > 0 ? ` (${alerts.length})` : ''}` },
-    { id: 'permits', icon: '🔑', label: `Permits${totalPermitConflicts > 0 ? ` ⚠${totalPermitConflicts}` : ''}` },
-    { id: 'map', icon: '⊕', label: 'Plant Map' },
+    { id: 'dashboard', icon: 'â¬¡', label: 'Dashboard' },
+    { id: 'handover', icon: 'âœ', label: 'Handover' },
+    { id: 'alerts', icon: 'âš¡', label: `Alerts${alerts.length > 0 ? ` (${alerts.length})` : ''}` },
+    { id: 'permits', icon: 'ðŸ”‘', label: `Permits${totalPermitConflicts > 0 ? ` âš ${totalPermitConflicts}` : ''}` },
+    { id: 'map', icon: 'âŠ•', label: 'Plant Map' },
   ];
 
   return (
@@ -614,7 +615,7 @@ export default function App() {
               <div className="user-role">Safety Officer</div>
             </div>
           </div>
-          <button className="logout-btn" onClick={() => setUser(null)}>⏻</button>
+          <button className="logout-btn" onClick={() => setUser(null)}>â»</button>
         </div>
       </aside>
 
@@ -629,12 +630,12 @@ export default function App() {
               {activeTab === 'permits' && 'Permit to Work'}
               {activeTab === 'map' && 'Plant Map'}
             </div>
-            <div className="breadcrumb">Vizag Steel Plant · CokeOven Division</div>
+            <div className="breadcrumb">Vizag Steel Plant Â· CokeOven Division</div>
           </div>
           <div className="topbar-right">
             {totalPermitConflicts > 0 && (
               <div className="permit-conflict-chip" onClick={() => setActiveTab('permits')}>
-                🔒 {totalPermitConflicts} PTW CONFLICT{totalPermitConflicts > 1 ? 'S' : ''}
+                ðŸ”’ {totalPermitConflicts} PTW CONFLICT{totalPermitConflicts > 1 ? 'S' : ''}
               </div>
             )}
             {criticalCount > 0 && (
@@ -644,7 +645,7 @@ export default function App() {
               </div>
             )}
             <div className="clock">{time.toLocaleTimeString('en-IN', { hour12: false })}</div>
-            <div className="live-chip">● LIVE</div>
+            <div className="live-chip">â— LIVE</div>
           </div>
         </div>
 
@@ -655,7 +656,7 @@ export default function App() {
             <>
               <div className="kpi-row">
                 {[
-                  { label: 'Critical Zones', value: criticalCount, color: criticalCount > 0 ? '#ff3a3a' : '#00ffb4', sub: 'mismatch score ≥ 60' },
+                  { label: 'Critical Zones', value: criticalCount, color: criticalCount > 0 ? '#ff3a3a' : '#00ffb4', sub: 'mismatch score â‰¥ 60' },
                   { label: 'Avg Sensor Risk', value: `${avgRisk}%`, color: avgRisk > 50 ? '#ffaa00' : '#00ffb4', sub: 'across all zones' },
                   { label: 'Active Alerts', value: alerts.length, color: alerts.length > 0 ? '#ff3a3a' : '#00ffb4', sub: 'last 20 events' },
                   { label: 'PTW Conflicts', value: totalPermitConflicts, color: totalPermitConflicts > 0 ? '#ffaa00' : '#00ffb4', sub: 'live permit clashes' },
@@ -688,7 +689,7 @@ export default function App() {
           {activeTab === 'handover' && (
             <div className="handover-panel">
               <div className="handover-info">
-                <div className="info-icon">ℹ</div>
+                <div className="info-icon">â„¹</div>
                 <div>
                   <strong>How it works:</strong> Submit a shift-handover note for any zone. The AI compares the risk language in your note against live sensor trends. If sensors show escalation but your note sounds calm, a Verbal-Sensor Mismatch is flagged.
                 </div>
@@ -701,9 +702,9 @@ export default function App() {
                   <div className="handover-zone-preview" style={{ borderColor: color + '40' }}>
                     <div className="hzp-label">CURRENT ZONE STATE</div>
                     <div className="hzp-row">
-                      <span style={{ color }}>● {riskLabel(z.mismatchScore)}</span>
+                      <span style={{ color }}>â— {riskLabel(z.mismatchScore)}</span>
                       <span>Gas: {z.sensor.gasPpm} ppm</span>
-                      <span>Temp: {z.sensor.tempC}°C</span>
+                      <span>Temp: {z.sensor.tempC}Â°C</span>
                       <span>Risk: {(z.sensor.riskLevel * 100).toFixed(0)}%</span>
                       {z.prediction?.confident && z.prediction.minutesToCritical !== null && (
                         <TimeToCritical prediction={z.prediction} />
@@ -711,7 +712,7 @@ export default function App() {
                     </div>
                     {z.activePermits?.length > 0 && (
                       <div className="hzp-permits">
-                        🔑 Active permits: {z.activePermits.map(p => `${p.id} (${p.type})`).join(', ')}
+                        ðŸ”‘ Active permits: {z.activePermits.map(p => `${p.id} (${p.type})`).join(', ')}
                       </div>
                     )}
                   </div>
@@ -735,7 +736,7 @@ export default function App() {
                 <div className="char-count">{note.length} chars</div>
               </div>
               <button className={`submit-btn ${submitting ? 'submitting' : ''}`} onClick={submitHandover} disabled={submitting || !note.trim()}>
-                {submitting ? <><span className="spin-icon">◌</span> AI ANALYZING...</> : <><span>⚡</span> SUBMIT & ANALYZE</>}
+                {submitting ? <><span className="spin-icon">â—Œ</span> AI ANALYZING...</> : <><span>âš¡</span> SUBMIT & ANALYZE</>}
               </button>
               <div className="sample-notes">
                 <div className="sample-label">TRY A SAMPLE NOTE:</div>
@@ -754,7 +755,7 @@ export default function App() {
             <div>
               {alerts.length === 0 ? (
                 <div className="empty-state">
-                  <div className="empty-icon">✓</div>
+                  <div className="empty-icon">âœ“</div>
                   <div>No active mismatches detected</div>
                   <div className="empty-sub">All zones within normal parameters</div>
                 </div>
@@ -776,3 +777,5 @@ export default function App() {
     </div>
   );
 }
+
+
