@@ -6,7 +6,7 @@ const { Server } = require('socket.io');
 const { generateSensorReading, zones } = require('./simulator');
 const { scoreHandoverText } = require('./nlpRiskScorer');
 const { getIncidentBackedRecommendation } = require('./ragEngine');
-
+const authRoutes = require('./routes/authRoutes');
 const { connectDB } = require('./db');
 const SensorReadingModel = require('./models/SensorReading');
 const HandoverLogModel = require('./models/HandoverLog');
@@ -16,7 +16,7 @@ const PermitModel = require('./models/Permit');
 const app = express();
 app.use(cors());
 app.use(express.json());
-
+app.use('/api/auth', authRoutes);
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 

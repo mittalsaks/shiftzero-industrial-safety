@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
+import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LandingPage({ onLogin }) {
   const canvasRef = useRef(null);
   const [loading, setLoading] = useState(false);
   const [glitch, setGlitch] = useState(false);
+  const [error, setError] = useState('');
 
   // Particle system
   useEffect(() => {
@@ -33,7 +35,6 @@ export default function LandingPage({ onLogin }) {
         ctx.fillStyle = `rgba(0,255,180,${p.alpha})`;
         ctx.fill();
       });
-      // Draw lines between close particles
       for (let i = 0; i < particles.length; i++) {
         for (let j = i + 1; j < particles.length; j++) {
           const dx = particles[i].x - particles[j].x;
@@ -70,9 +71,42 @@ export default function LandingPage({ onLogin }) {
     return () => clearInterval(t);
   }, []);
 
+  const googleLogin = useGoogleLogin({
+    onSuccess: async (tokenResponse) => {
+      setLoading(true);
+      setError('');
+      try {
+        const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ access_token: tokenResponse.access_token }),
+        });
+
+        if (!res.ok) {
+          const errData = await res.json().catch(() => ({}));
+          throw new Error(errData.message || 'Login failed on server');
+        }
+
+        const data = await res.json();
+        localStorage.setItem('authToken', data.token);
+        onLogin(data.user);
+      } catch (err) {
+        console.error('Google login error:', err);
+        setError(err.message || 'Something went wrong. Please try again.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: (err) => {
+      console.error('Google OAuth error:', err);
+      setError('Google sign-in was cancelled or failed.');
+      setLoading(false);
+    },
+  });
+
   const handleLogin = () => {
-    setLoading(true);
-    setTimeout(() => onLogin({ name: 'Safety Officer', email: 'officer@vizagsteel.in', avatar: 'SO' }), 1800);
+    setError('');
+    googleLogin();
   };
 
   return (
@@ -94,12 +128,35 @@ export default function LandingPage({ onLogin }) {
         pointerEvents: 'none'
       }} />
 
-      {/* Top bar */}
-      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10, padding: '20px 40px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', borderBottom: '1px solid rgba(0,255,180,0.08)' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ffb4', boxShadow: '0 0 8px #00ffb4', animation: 'pulse 1.5s infinite' }} />
-          <span style={{ color: '#00ffb4', fontFamily: 'monospace', fontSize: 13, letterSpacing: 3 }}>SHIFT ZERO // v2.1.0</span>
+      {/* ===================== TOP BAR ===================== */}
+      <div style={{
+        position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
+        padding: '10px 40px', display: 'flex', alignItems: 'center',
+        justifyContent: 'space-between',
+        borderBottom: '1px solid rgba(0,255,180,0.08)'
+      }}>
+        {/* LEFT: small icon + pulse dot + app name */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          {/* ✅ SMALL LOGO (icons.svg) in top navbar */}
+          <img
+  src="/Icon.png"
+  alt="ShiftZero Icon"
+  style={{
+    width: 80,
+    height: 80,
+    objectFit: 'contain',
+    filter: 'drop-shadow(0 0 12px rgba(0,255,180,0.9))',
+  }}
+/>
+<div style={{
+  width: 8, height: 8, borderRadius: '50%',
+  background: '#00ffb4',
+  boxShadow: '0 0 8px #00ffb4',
+  animation: 'pulse 1.5s infinite'
+}} />
         </div>
+
+        {/* RIGHT: compliance tags */}
         <div style={{ display: 'flex', gap: 24 }}>
           {['OISD', 'DGFASLI', 'Factory Act'].map(t => (
             <span key={t} style={{ color: 'rgba(0,255,180,0.4)', fontFamily: 'monospace', fontSize: 11, letterSpacing: 2 }}>{t}</span>
@@ -107,12 +164,36 @@ export default function LandingPage({ onLogin }) {
         </div>
       </div>
 
-      {/* Center content */}
-      <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 0 }}>
+      {/* ===================== CENTER CONTENT ===================== */}
+      <div style={{
+        position: 'relative', zIndex: 10,
+        display: 'flex', flexDirection: 'column',
+        alignItems: 'center', justifyContent: 'center',
+        height: '100vh', gap: 0
+      }}>
+
+        {/* ✅ BIG LOGO (icons.svg) — center top, above badge */}
+        <div style={{ marginBottom: 24 }}>
+          <img
+            src="/logo.png"
+            alt="ShiftZero Logo"
+            style={{
+              width: 96,
+              height: 96,
+              filter: 'drop-shadow(0 0 24px rgba(0,255,180,0.75)) drop-shadow(0 0 48px rgba(0,255,180,0.3))',
+            }}
+          />
+        </div>
 
         {/* Badge */}
-        <div style={{ marginBottom: 28, padding: '6px 18px', border: '1px solid rgba(0,255,180,0.3)', borderRadius: 30, background: 'rgba(0,255,180,0.05)', backdropFilter: 'blur(10px)' }}>
-          <span style={{ color: '#00ffb4', fontFamily: 'monospace', fontSize: 11, letterSpacing: 3 }}>â¬¡ AI-POWERED INDUSTRIAL SAFETY INTELLIGENCE</span>
+        <div style={{
+          marginBottom: 28, padding: '6px 18px',
+          border: '1px solid rgba(0,255,180,0.3)', borderRadius: 30,
+          background: 'rgba(0,255,180,0.05)', backdropFilter: 'blur(10px)'
+        }}>
+          <span style={{ color: '#00ffb4', fontFamily: 'monospace', fontSize: 11, letterSpacing: 3 }}>
+            ⬡ AI-POWERED INDUSTRIAL SAFETY INTELLIGENCE
+          </span>
         </div>
 
         {/* Main title */}
@@ -134,12 +215,21 @@ export default function LandingPage({ onLogin }) {
           SHIFT<span style={{ color: '#00ffb4', textShadow: '0 0 30px rgba(0,255,180,0.6)' }}>ZERO</span>
         </h1>
 
-        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, margin: '16px 0 0', fontFamily: 'monospace', letterSpacing: 2, textAlign: 'center' }}>
+        <p style={{
+          color: 'rgba(255,255,255,0.45)', fontSize: 16,
+          margin: '16px 0 0', fontFamily: 'monospace',
+          letterSpacing: 2, textAlign: 'center'
+        }}>
           VERBAL-SENSOR MISMATCH INTELLIGENCE PLATFORM
         </p>
 
         {/* Stats row */}
-        <div style={{ display: 'flex', gap: 40, margin: '40px 0', padding: '20px 40px', border: '1px solid rgba(0,255,180,0.12)', borderRadius: 12, background: 'rgba(0,255,180,0.03)', backdropFilter: 'blur(20px)' }}>
+        <div style={{
+          display: 'flex', gap: 40, margin: '40px 0',
+          padding: '20px 40px',
+          border: '1px solid rgba(0,255,180,0.12)', borderRadius: 12,
+          background: 'rgba(0,255,180,0.03)', backdropFilter: 'blur(20px)'
+        }}>
           {[
             { val: '6,500+', label: 'Fatal accidents/yr (DGFASLI)' },
             { val: '< 10min', label: 'Alert-to-action target' },
@@ -190,15 +280,21 @@ export default function LandingPage({ onLogin }) {
           )}
         </button>
 
+        {error && (
+          <p style={{ color: '#ff003c', fontSize: 13, marginTop: 14, fontFamily: 'monospace', letterSpacing: 0.5, textAlign: 'center', maxWidth: 380 }}>
+            {error}
+          </p>
+        )}
+
         <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 16, fontFamily: 'monospace', letterSpacing: 1 }}>
-          AUTHORIZED PERSONNEL ONLY â€” VIZAG STEEL PLANT SAFETY OPS
+          AUTHORIZED PERSONNEL ONLY — VIZAG STEEL PLANT SAFETY OPS
         </p>
       </div>
 
       {/* Bottom ticker */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10, borderTop: '1px solid rgba(0,255,180,0.08)', padding: '10px 0', overflow: 'hidden', background: 'rgba(2,11,20,0.8)' }}>
         <div style={{ display: 'flex', gap: 60, animation: 'ticker 20s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
-          {['ðŸŸ¢ CokeOvenBattery-3: MONITORING', 'ðŸŸ¡ BlastFurnace-1: NORMAL', 'ðŸŸ¢ RollingMill-2: STABLE', 'ðŸŸ¢ GasStorage-Yard: NORMAL', 'âš¡ AI Engine: ACTIVE', 'ðŸ“¡ Sensor Feed: LIVE', 'ðŸ›¡ OISD-116 Compliant'].map((t, i) => (
+          {['🟢 CokeOvenBattery-3: MONITORING', '🟡 BlastFurnace-1: NORMAL', '🟢 RollingMill-2: STABLE', '🟢 GasStorage-Yard: NORMAL', '⚡ AI Engine: ACTIVE', '📡 Sensor Feed: LIVE', '🛡 OISD-116 Compliant'].map((t, i) => (
             <span key={i} style={{ color: 'rgba(0,255,180,0.5)', fontFamily: 'monospace', fontSize: 11, letterSpacing: 2 }}>{t}</span>
           ))}
         </div>

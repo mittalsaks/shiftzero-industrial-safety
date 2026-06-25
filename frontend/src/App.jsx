@@ -614,7 +614,15 @@ export default function App() {
         </nav>
         <div className="sidebar-footer">
           <div className="user-chip">
-            <div className="user-avatar">{user.avatar}</div>
+            // ✅ Fix — img tag use karo
+              <div className="user-avatar">
+                <img 
+                  src={user.avatar} 
+                  alt={user.name}
+                  style={{ width: '100%', height: '100%', borderRadius: '50%', objectFit: 'cover' }}
+                  onError={e => { e.target.style.display='none'; }}
+                />
+              </div>
             <div>
               <div className="user-name">{user.name}</div>
               <div className="user-role">Safety Officer</div>
