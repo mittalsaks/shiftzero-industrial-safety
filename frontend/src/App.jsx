@@ -1,9 +1,9 @@
-﻿const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
-import { useEffect, useState, useRef } from 'react';
+﻿import { useEffect, useState, useRef } from 'react';
 import { io } from 'socket.io-client';
 import PlantGeospatialView from './PlantGeospatialView';
 import LandingPage from './LandingPage';
 import './App.css';
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
 
 const socket = io(BACKEND_URL);
 
@@ -777,5 +777,7 @@ export default function App() {
     </div>
   );
 }
+
+
 
 
