@@ -112,7 +112,7 @@ export default function LandingPage({ onLogin }) {
 
         {/* Badge */}
         <div style={{ marginBottom: 28, padding: '6px 18px', border: '1px solid rgba(0,255,180,0.3)', borderRadius: 30, background: 'rgba(0,255,180,0.05)', backdropFilter: 'blur(10px)' }}>
-          <span style={{ color: '#00ffb4', fontFamily: 'monospace', fontSize: 11, letterSpacing: 3 }}>⬡ AI-POWERED INDUSTRIAL SAFETY INTELLIGENCE</span>
+          <span style={{ color: '#00ffb4', fontFamily: 'monospace', fontSize: 11, letterSpacing: 3 }}>â¬¡ AI-POWERED INDUSTRIAL SAFETY INTELLIGENCE</span>
         </div>
 
         {/* Main title */}
@@ -191,14 +191,14 @@ export default function LandingPage({ onLogin }) {
         </button>
 
         <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 16, fontFamily: 'monospace', letterSpacing: 1 }}>
-          AUTHORIZED PERSONNEL ONLY — VIZAG STEEL PLANT SAFETY OPS
+          AUTHORIZED PERSONNEL ONLY â€” VIZAG STEEL PLANT SAFETY OPS
         </p>
       </div>
 
       {/* Bottom ticker */}
       <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, zIndex: 10, borderTop: '1px solid rgba(0,255,180,0.08)', padding: '10px 0', overflow: 'hidden', background: 'rgba(2,11,20,0.8)' }}>
         <div style={{ display: 'flex', gap: 60, animation: 'ticker 20s linear infinite', whiteSpace: 'nowrap', width: 'max-content' }}>
-          {['🟢 CokeOvenBattery-3: MONITORING', '🟡 BlastFurnace-1: NORMAL', '🟢 RollingMill-2: STABLE', '🟢 GasStorage-Yard: NORMAL', '⚡ AI Engine: ACTIVE', '📡 Sensor Feed: LIVE', '🛡 OISD-116 Compliant'].map((t, i) => (
+          {['ðŸŸ¢ CokeOvenBattery-3: MONITORING', 'ðŸŸ¡ BlastFurnace-1: NORMAL', 'ðŸŸ¢ RollingMill-2: STABLE', 'ðŸŸ¢ GasStorage-Yard: NORMAL', 'âš¡ AI Engine: ACTIVE', 'ðŸ“¡ Sensor Feed: LIVE', 'ðŸ›¡ OISD-116 Compliant'].map((t, i) => (
             <span key={i} style={{ color: 'rgba(0,255,180,0.5)', fontFamily: 'monospace', fontSize: 11, letterSpacing: 2 }}>{t}</span>
           ))}
         </div>

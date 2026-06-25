@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-// Plant layout — percent-based positions on the SVG viewBox (0 0 100 80)
+// Plant layout â€” percent-based positions on the SVG viewBox (0 0 100 80)
 const ZONE_LAYOUT = {
   'CokeOvenBattery-3': { x: 8,  y: 8,  w: 28, h: 20, label: ['COKE OVEN', 'BATTERY-3'] },
   'BlastFurnace-1':    { x: 64, y: 8,  w: 28, h: 20, label: ['BLAST', 'FURNACE-1'] },
@@ -60,7 +60,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
 
   return (
     <div className="plant-map-wrapper">
-      <h2>⊕ Plant Geospatial Risk View</h2>
+      <h2>âŠ• Plant Geospatial Risk View</h2>
       <svg
         viewBox="0 0 100 80"
         className="plant-map"
@@ -106,10 +106,10 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
 
         {/* Central processing area label */}
         <text x="50" y="42" textAnchor="middle" fontSize="2.5" fill="rgba(0,255,180,0.08)" fontFamily="monospace" letterSpacing="3">
-          INTEGRATED STEEL PLANT — VIZAG
+          INTEGRATED STEEL PLANT â€” VIZAG
         </text>
 
-        {/* ── Pipelines ── */}
+        {/* â”€â”€ Pipelines â”€â”€ */}
         {PIPELINES.map(p => {
           const c1 = zoneCenter(p.from);
           const c2 = zoneCenter(p.to);
@@ -157,7 +157,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
           );
         })}
 
-        {/* ── Zone blocks ── */}
+        {/* â”€â”€ Zone blocks â”€â”€ */}
         {Object.entries(ZONE_LAYOUT).map(([key, layout]) => {
           const z = getZoneState(key);
           if (!z) return null;
@@ -306,7 +306,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
                     fill="#071525" stroke={fill} strokeWidth="0.3" rx="1.5" opacity="0.95"
                   />
                   <text x={cx} y={layout.y - 5.5} textAnchor="middle" fontSize="2" fill={fill} fontFamily="monospace" fontWeight="600">
-                    {`Gas: ${z.sensor.gasPpm}ppm  Temp: ${z.sensor.tempC}°C`}
+                    {`Gas: ${z.sensor.gasPpm}ppm  Temp: ${z.sensor.tempC}Â°C`}
                   </text>
                   <text x={cx} y={layout.y - 2.8} textAnchor="middle" fontSize="1.8" fill="rgba(232,244,248,0.6)" fontFamily="monospace">
                     Click for full details
@@ -317,7 +317,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
           );
         })}
 
-        {/* ── Pipeline legend ── */}
+        {/* â”€â”€ Pipeline legend â”€â”€ */}
         <g>
           <line x1="4" y1="76" x2="9" y2="76" stroke={PIPE_COLORS.gas} strokeWidth="0.5" strokeDasharray="2,1.5" opacity="0.7"/>
           <text x="10.5" y="76.7" fontSize="1.9" fill="rgba(232,244,248,0.4)" fontFamily="monospace">Gas Pipeline</text>
@@ -343,7 +343,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
           <span><i className="dot" style={{ background: '#ffaa00' }} /> Elevated</span>
           <span><i className="dot" style={{ background: '#ff3a3a' }} /> Critical mismatch</span>
         </div>
-        <span className="map-hint">Click any zone for details · Hover for quick stats</span>
+        <span className="map-hint">Click any zone for details Â· Hover for quick stats</span>
       </div>
     </div>
   );
