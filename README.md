@@ -194,12 +194,10 @@ flowchart LR
 
 ## 📸 Product Walkthrough
 
-> Replace the placeholder paths below with your screenshot files (e.g. place them in `/docs/screenshots/` in the repo and update paths). Suggested mapping based on the app's pages, in the order a user would naturally see them:
-
 ### 1. Landing Page
 The entry point — branding, key stats (6,500+ fatal accidents/yr, <10min alert target, 4 live zones, real-time fusion), and Google login.
 
-`![Landing Page](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/LandingPage.png)`
+![Landing Page](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/LandingPage.png)
 
 ### 2. Live Operations Dashboard
 Real-time view of all 4 zones (CokeOvenBattery-3, BlastFurnace-1, RollingMill-2, GasStorage-Yard) with gas/temp/risk readings, sparkline trends, time-to-critical predictions, and permit conflict badges.
