@@ -926,7 +926,7 @@ function UsersTab({ currentUser }) {
     setNewInviteUrl(null);
     const res = await fetch(`${BACKEND_URL}/api/auth/invite`, {
       method: 'POST', headers: authHeaders(),
-      body: JSON.stringify({ role: inviteRole }),
+      body: JSON.stringify({ role: inviteRole, forEmail: inviteEmail }),
     });
     if (res.ok) {
       const data = await res.json();
