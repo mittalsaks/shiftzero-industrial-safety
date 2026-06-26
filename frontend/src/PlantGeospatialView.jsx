@@ -60,7 +60,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
 
   return (
     <div className="plant-map-wrapper">
-      <h2>âŠ• Plant Geospatial Risk View</h2>
+      <h2>⬡ Plant Geospatial Risk View</h2>
       <svg
         viewBox="0 0 100 80"
         className="plant-map"
@@ -106,7 +106,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
 
         {/* Central processing area label */}
         <text x="50" y="42" textAnchor="middle" fontSize="2.5" fill="rgba(0,255,180,0.08)" fontFamily="monospace" letterSpacing="3">
-          INTEGRATED STEEL PLANT â€” VIZAG
+          INTEGRATED STEEL PLANT — VIZAG
         </text>
 
         {/* â”€â”€ Pipelines â”€â”€ */}
@@ -306,7 +306,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
                     fill="#071525" stroke={fill} strokeWidth="0.3" rx="1.5" opacity="0.95"
                   />
                   <text x={cx} y={layout.y - 5.5} textAnchor="middle" fontSize="2" fill={fill} fontFamily="monospace" fontWeight="600">
-                    {`Gas: ${z.sensor.gasPpm}ppm  Temp: ${z.sensor.tempC}Â°C`}
+                    {`Gas: ${z.sensor.gasPpm}ppm  Temp: ${z.sensor.tempC}°C`}
                   </text>
                   <text x={cx} y={layout.y - 2.8} textAnchor="middle" fontSize="1.8" fill="rgba(232,244,248,0.6)" fontFamily="monospace">
                     Click for full details
@@ -343,7 +343,7 @@ export default function PlantGeospatialView({ liveState, onZoneClick }) {
           <span><i className="dot" style={{ background: '#ffaa00' }} /> Elevated</span>
           <span><i className="dot" style={{ background: '#ff3a3a' }} /> Critical mismatch</span>
         </div>
-        <span className="map-hint">Click any zone for details Â· Hover for quick stats</span>
+        <span className="map-hint">Click any zone for details · Hover for quick stats</span>
       </div>
     </div>
   );

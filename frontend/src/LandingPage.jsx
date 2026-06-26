@@ -1,27 +1,31 @@
+// frontend/src/LandingPage.jsx
 import { useEffect, useRef, useState } from 'react';
 import { useGoogleLogin } from '@react-oauth/google';
 
 export default function LandingPage({ onLogin }) {
   const canvasRef = useRef(null);
-  const [loading, setLoading] = useState(false);
-  const [glitch, setGlitch] = useState(false);
-  const [error, setError] = useState('');
+  const [loading, setLoading]           = useState(false);
+  const [glitch, setGlitch]             = useState(false);
+  const [error, setError]               = useState('');
+  const [accessDenied, setAccessDenied] = useState(false);
+  const [deniedMessage, setDeniedMessage] = useState('');
+
+  // Read invite token from URL (e.g. ?invite=abc123)
+  const inviteToken = new URLSearchParams(window.location.search).get('invite');
 
   // Particle system
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext('2d');
     let animId;
     let W = canvas.width = window.innerWidth;
     let H = canvas.height = window.innerHeight;
 
     const particles = Array.from({ length: 120 }, () => ({
-      x: Math.random() * W,
-      y: Math.random() * H,
-      vx: (Math.random() - 0.5) * 0.4,
-      vy: (Math.random() - 0.5) * 0.4,
-      r: Math.random() * 1.8 + 0.4,
-      alpha: Math.random() * 0.6 + 0.2,
+      x: Math.random() * W, y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.4, vy: (Math.random() - 0.5) * 0.4,
+      r: Math.random() * 1.8 + 0.4, alpha: Math.random() * 0.6 + 0.2,
     }));
 
     const draw = () => {
@@ -54,15 +58,12 @@ export default function LandingPage({ onLogin }) {
     };
     draw();
 
-    const resize = () => {
-      W = canvas.width = window.innerWidth;
-      H = canvas.height = window.innerHeight;
-    };
+    const resize = () => { W = canvas.width = window.innerWidth; H = canvas.height = window.innerHeight; };
     window.addEventListener('resize', resize);
     return () => { cancelAnimationFrame(animId); window.removeEventListener('resize', resize); };
   }, []);
 
-  // Glitch effect interval
+  // Glitch effect
   useEffect(() => {
     const t = setInterval(() => {
       setGlitch(true);
@@ -79,84 +80,91 @@ export default function LandingPage({ onLogin }) {
         const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/google`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ access_token: tokenResponse.access_token }),
+          body: JSON.stringify({
+            access_token: tokenResponse.access_token,
+            inviteToken: inviteToken || undefined,
+          }),
         });
 
-        if (!res.ok) {
-          const errData = await res.json().catch(() => ({}));
-          throw new Error(errData.message || 'Login failed on server');
+        // Sirf ek baar parse karo, phir 'data' use karo everywhere
+const data = await res.json().catch(() => ({}));
+ 
+if (!res.ok) {
+  // ✅ 'data' use karo, errData nahi
+  if (data.code === 'NO_INVITE' || data.code === 'INVALID_INVITE' ||
+      data.code === 'INVITE_EXPIRED' || data.code === 'INVITE_USED') {
+    setAccessDenied(true);
+    setDeniedMessage(data.message || 'Access restricted.');
+    return;
+  }
+  throw new Error(data.message || 'Login failed on server');
+}
+
+        // Clean URL (remove ?invite= param after successful use)
+        if (inviteToken) {
+          window.history.replaceState({}, '', window.location.pathname);
         }
 
-        const data = await res.json();
         localStorage.setItem('authToken', data.token);
         onLogin(data.user);
       } catch (err) {
-        console.error('Google login error:', err);
         setError(err.message || 'Something went wrong. Please try again.');
       } finally {
         setLoading(false);
       }
     },
-    onError: (err) => {
-      console.error('Google OAuth error:', err);
+    onError: () => {
       setError('Google sign-in was cancelled or failed.');
       setLoading(false);
     },
   });
 
-  const handleLogin = () => {
-    setError('');
-    googleLogin();
-  };
+  const handleLogin = () => { setError(''); googleLogin(); };
 
+  // ── Access Denied Screen ──────────────────────────────────────────────────
+  if (accessDenied) return (
+      <div style={{ position: 'relative', width: '100vw', height: '100vh', background: '#020b14', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 20 }}>
+        <div style={{ position: 'relative', zIndex: 10, textAlign: 'center', padding: 40, border: '1px solid rgba(255,60,60,0.3)', borderRadius: 16, background: 'rgba(255,20,20,0.05)', maxWidth: 480 }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
+          <div style={{ color: '#ff3a3a', fontFamily: 'monospace', fontSize: 14, letterSpacing: 2, marginBottom: 12 }}>ACCESS RESTRICTED</div>
+          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13, lineHeight: 1.6, marginBottom: 24 }}>{deniedMessage}</div>
+          <div style={{ color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', fontSize: 11 }}>
+            Contact your shift supervisor or admin for an invite link.
+          </div>
+          <button onClick={() => setAccessDenied(false)} style={{ marginTop: 20, background: 'transparent', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(255,255,255,0.4)', padding: '8px 20px', borderRadius: 6, fontFamily: 'monospace', fontSize: 11, cursor: 'pointer' }}>
+            ← Try different account
+          </button>
+        </div>
+      </div>
+    );
+
+  // ── Main Landing ──────────────────────────────────────────────────────────
   return (
     <div style={{ position: 'relative', width: '100vw', height: '100vh', overflow: 'hidden', background: '#020b14' }}>
       <canvas ref={canvasRef} style={{ position: 'absolute', inset: 0, zIndex: 0 }} />
 
-      {/* Grid overlay */}
       <div style={{
         position: 'absolute', inset: 0, zIndex: 1,
         backgroundImage: `linear-gradient(rgba(0,255,180,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0,255,180,0.03) 1px, transparent 1px)`,
-        backgroundSize: '60px 60px'
+        backgroundSize: '60px 60px',
       }} />
-
-      {/* Radial glow center */}
       <div style={{
         position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)',
         width: 600, height: 600, borderRadius: '50%', zIndex: 1,
         background: 'radial-gradient(circle, rgba(0,255,180,0.07) 0%, transparent 70%)',
-        pointerEvents: 'none'
+        pointerEvents: 'none',
       }} />
 
-      {/* ===================== TOP BAR ===================== */}
+      {/* Top bar */}
       <div style={{
         position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10,
         padding: '10px 40px', display: 'flex', alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid rgba(0,255,180,0.08)'
+        justifyContent: 'space-between', borderBottom: '1px solid rgba(0,255,180,0.08)',
       }}>
-        {/* LEFT: small icon + pulse dot + app name */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          {/* ✅ SMALL LOGO (icons.svg) in top navbar */}
-          <img
-  src="/Icon.png"
-  alt="ShiftZero Icon"
-  style={{
-    width: 80,
-    height: 80,
-    objectFit: 'contain',
-    filter: 'drop-shadow(0 0 12px rgba(0,255,180,0.9))',
-  }}
-/>
-<div style={{
-  width: 8, height: 8, borderRadius: '50%',
-  background: '#00ffb4',
-  boxShadow: '0 0 8px #00ffb4',
-  animation: 'pulse 1.5s infinite'
-}} />
+          <img src="/Icon.png" alt="ShiftZero Icon" style={{ width: 80, height: 80, objectFit: 'contain', filter: 'drop-shadow(0 0 12px rgba(0,255,180,0.9))' }} />
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ffb4', boxShadow: '0 0 8px #00ffb4', animation: 'pulse 1.5s infinite' }} />
         </div>
-
-        {/* RIGHT: compliance tags */}
         <div style={{ display: 'flex', gap: 24 }}>
           {['OISD', 'DGFASLI', 'Factory Act'].map(t => (
             <span key={t} style={{ color: 'rgba(0,255,180,0.4)', fontFamily: 'monospace', fontSize: 11, letterSpacing: 2 }}>{t}</span>
@@ -164,72 +172,47 @@ export default function LandingPage({ onLogin }) {
         </div>
       </div>
 
-      {/* ===================== CENTER CONTENT ===================== */}
-      <div style={{
-        position: 'relative', zIndex: 10,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        height: '100vh', gap: 0
-      }}>
+      {/* Center content */}
+      <div style={{ position: 'relative', zIndex: 10, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', gap: 0 }}>
 
-        {/* ✅ BIG LOGO (icons.svg) — center top, above badge */}
         <div style={{ marginBottom: 24 }}>
-          <img
-            src="/logo.png"
-            alt="ShiftZero Logo"
-            style={{
-              width: 96,
-              height: 96,
-              filter: 'drop-shadow(0 0 24px rgba(0,255,180,0.75)) drop-shadow(0 0 48px rgba(0,255,180,0.3))',
-            }}
-          />
+          <img src="/logo.png" alt="ShiftZero Logo" style={{ width: 96, height: 96, filter: 'drop-shadow(0 0 24px rgba(0,255,180,0.75)) drop-shadow(0 0 48px rgba(0,255,180,0.3))' }} />
         </div>
 
-        {/* Badge */}
-        <div style={{
-          marginBottom: 28, padding: '6px 18px',
-          border: '1px solid rgba(0,255,180,0.3)', borderRadius: 30,
-          background: 'rgba(0,255,180,0.05)', backdropFilter: 'blur(10px)'
-        }}>
+        {/* Invite banner */}
+        {inviteToken && (
+          <div style={{
+            marginBottom: 20, padding: '8px 20px', borderRadius: 30,
+            background: 'rgba(0,255,180,0.1)', border: '1px solid rgba(0,255,180,0.4)',
+          }}>
+            <span style={{ color: '#00ffb4', fontFamily: 'monospace', fontSize: 11, letterSpacing: 2 }}>
+              ✓ INVITE LINK DETECTED — Sign in to join your team
+            </span>
+          </div>
+        )}
+
+        <div style={{ marginBottom: 28, padding: '6px 18px', border: '1px solid rgba(0,255,180,0.3)', borderRadius: 30, background: 'rgba(0,255,180,0.05)', backdropFilter: 'blur(10px)' }}>
           <span style={{ color: '#00ffb4', fontFamily: 'monospace', fontSize: 11, letterSpacing: 3 }}>
             ⬡ AI-POWERED INDUSTRIAL SAFETY INTELLIGENCE
           </span>
         </div>
 
-        {/* Main title */}
         <h1 style={{
           fontFamily: '"Segoe UI", system-ui, sans-serif',
-          fontSize: 'clamp(52px, 8vw, 88px)',
-          fontWeight: 700,
-          margin: 0,
-          lineHeight: 1.05,
-          textAlign: 'center',
-          letterSpacing: -2,
+          fontSize: 'clamp(52px, 8vw, 88px)', fontWeight: 700,
+          margin: 0, lineHeight: 1.05, textAlign: 'center', letterSpacing: -2,
           color: glitch ? '#ff003c' : '#ffffff',
-          textShadow: glitch
-            ? '2px 0 #00ffb4, -2px 0 #ff003c'
-            : '0 0 60px rgba(0,255,180,0.15)',
-          transition: 'color 0.05s',
-          filter: glitch ? 'blur(0.5px)' : 'none',
+          textShadow: glitch ? '2px 0 #00ffb4, -2px 0 #ff003c' : '0 0 60px rgba(0,255,180,0.15)',
+          transition: 'color 0.05s', filter: glitch ? 'blur(0.5px)' : 'none',
         }}>
           SHIFT<span style={{ color: '#00ffb4', textShadow: '0 0 30px rgba(0,255,180,0.6)' }}>ZERO</span>
         </h1>
 
-        <p style={{
-          color: 'rgba(255,255,255,0.45)', fontSize: 16,
-          margin: '16px 0 0', fontFamily: 'monospace',
-          letterSpacing: 2, textAlign: 'center'
-        }}>
+        <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: 16, margin: '16px 0 0', fontFamily: 'monospace', letterSpacing: 2, textAlign: 'center' }}>
           VERBAL-SENSOR MISMATCH INTELLIGENCE PLATFORM
         </p>
 
-        {/* Stats row */}
-        <div style={{
-          display: 'flex', gap: 40, margin: '40px 0',
-          padding: '20px 40px',
-          border: '1px solid rgba(0,255,180,0.12)', borderRadius: 12,
-          background: 'rgba(0,255,180,0.03)', backdropFilter: 'blur(20px)'
-        }}>
+        <div style={{ display: 'flex', gap: 40, margin: '40px 0', padding: '20px 40px', border: '1px solid rgba(0,255,180,0.12)', borderRadius: 12, background: 'rgba(0,255,180,0.03)', backdropFilter: 'blur(20px)' }}>
           {[
             { val: '6,500+', label: 'Fatal accidents/yr (DGFASLI)' },
             { val: '< 10min', label: 'Alert-to-action target' },
@@ -243,7 +226,6 @@ export default function LandingPage({ onLogin }) {
           ))}
         </div>
 
-        {/* Google login button */}
         <button
           onClick={handleLogin}
           disabled={loading}
@@ -251,13 +233,10 @@ export default function LandingPage({ onLogin }) {
             display: 'flex', alignItems: 'center', gap: 12,
             padding: '14px 32px', borderRadius: 10,
             background: loading ? 'rgba(0,255,180,0.08)' : 'rgba(255,255,255,0.06)',
-            border: '1px solid rgba(0,255,180,0.35)',
-            color: '#fff', fontSize: 15, fontWeight: 500,
-            cursor: loading ? 'wait' : 'pointer',
-            backdropFilter: 'blur(20px)',
-            transition: 'all 0.2s',
-            boxShadow: '0 0 30px rgba(0,255,180,0.08)',
-            minWidth: 260, justifyContent: 'center',
+            border: '1px solid rgba(0,255,180,0.35)', color: '#fff',
+            fontSize: 15, fontWeight: 500, cursor: loading ? 'wait' : 'pointer',
+            backdropFilter: 'blur(20px)', transition: 'all 0.2s',
+            boxShadow: '0 0 30px rgba(0,255,180,0.08)', minWidth: 260, justifyContent: 'center',
           }}
           onMouseEnter={e => { if (!loading) { e.currentTarget.style.background = 'rgba(0,255,180,0.1)'; e.currentTarget.style.boxShadow = '0 0 40px rgba(0,255,180,0.2)'; }}}
           onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.06)'; e.currentTarget.style.boxShadow = '0 0 30px rgba(0,255,180,0.08)'; }}
@@ -287,7 +266,7 @@ export default function LandingPage({ onLogin }) {
         )}
 
         <p style={{ color: 'rgba(255,255,255,0.2)', fontSize: 11, marginTop: 16, fontFamily: 'monospace', letterSpacing: 1 }}>
-          AUTHORIZED PERSONNEL ONLY — VIZAG STEEL PLANT SAFETY OPS
+          {inviteToken ? 'YOU HAVE BEEN INVITED — SIGN IN TO CONTINUE' : 'AUTHORIZED PERSONNEL ONLY'}
         </p>
       </div>
 
