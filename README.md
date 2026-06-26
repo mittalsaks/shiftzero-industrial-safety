@@ -199,7 +199,7 @@ flowchart LR
 ### 1. Landing Page
 The entry point — branding, key stats (6,500+ fatal accidents/yr, <10min alert target, 4 live zones, real-time fusion), and Google login.
 
-`![Landing Page](./docs/screenshots/landing-page.png)`
+`![Landing Page](./Images/LandingPage.png)`
 
 ### 2. Live Operations Dashboard
 Real-time view of all 4 zones (CokeOvenBattery-3, BlastFurnace-1, RollingMill-2, GasStorage-Yard) with gas/temp/risk readings, sparkline trends, time-to-critical predictions, and permit conflict badges.
