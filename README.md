@@ -202,27 +202,26 @@ The entry point — branding, key stats (6,500+ fatal accidents/yr, <10min alert
 ### 2. Live Operations Dashboard
 Real-time view of all 4 zones (CokeOvenBattery-3, BlastFurnace-1, RollingMill-2, GasStorage-Yard) with gas/temp/risk readings, sparkline trends, time-to-critical predictions, and permit conflict badges.
 
-`![Live Dashboard](./docs/screenshots/dashboard.png)`
+![Live Dashboard](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/Dashboard.png)
 
 ### 3. Shift Handover
 The core mismatch-detection interface — supervisor's current zone state vs. the handover note input box, with a sample note to try.
 
-`![Shift Handover](./docs/screenshots/handover.png)`
+![Shift Handover](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/Handover.png)
 
 ### 4. Alert Feed
 Live feed of all verbal-sensor mismatch alerts as they're detected (shown here in its "all clear" state).
 
-`![Alert Feed](./docs/screenshots/alerts.png)`
+![Alert Feed](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/AlertFeed.png)
 
 ### 5. Permit to Work
 Active/closed permits list with the auto-detected permit conflict banner at the top, plus the "Issue New Permit" form.
 
-`![Permit to Work](./docs/screenshots/permits.png)`
+![Permit to Work](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/Permits.png)
 
 ### 6. Plant Map
-Animated geospatial view of the plant with pipeline/feed-line connections between zones and live per-zone risk %.
 
-`![Plant Map](./docs/screenshots/plant-map.png)`
+![Plant Map](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/PlantMap.png)
 
 ---
 
