@@ -76,7 +76,11 @@ In parallel, **Permit-to-Work data is cross-checked against live sensors** — e
 | 🗺 **Animated Plant Map** | Live geospatial view with pipeline/feed-line flow and zone risk overlays |
 | 🤖 **RAG Incident Engine** | TF-IDF retrieval over a synthetic incident corpus + Gemini-generated recommendations |
 | 📋 **Incident Corpus** | OISD / DGFASLI / Vizag-pattern synthetic incident library for grounding AI advice |
-
+| 📋 **Incident Corpus** | OISD / DGFASLI / Vizag-pattern synthetic incident library for grounding AI advice |
+| 📄 **PDF Shift Reports** | One-click downloadable shift report — alerts, handover log, and permit status, generated server-side with PDFKit |
+| 🔍 **Audit Trail** | Every handover note is permanently linked to the submitting user (name, email, user ID) for accountability |
+| 📧 **Dynamic Critical-Alert Emails** | On a CRITICAL mismatch, an email is sent automatically to all current admins — fetched live from the database, never hardcoded |
+| 🔐 **Email-Locked Invites** | Invite links are bound to a specific email address at creation time — even if a link leaks, only the intended recipient can use it |
 ---
 
 ## 🏗 System Architecture
@@ -144,7 +148,27 @@ sequenceDiagram
     B-->>F: Mismatch alert + recommendation
     F-->>S: 🔴 Alert displayed in real time
 ```
+---
 
+## 🔐 Security Design
+
+Shift Zero treats two common SaaS security gaps as first-class problems, not afterthoughts:
+
+**1. No hardcoded alert recipients.**
+Early versions of critical-alert emails pointed at a fixed address in `.env`. This was replaced with a live query — every time a CRITICAL mismatch fires, the backend pulls the current list of `admin` / `super_admin` users directly from MongoDB and emails all of them. Adding, removing, or promoting an admin instantly changes who gets alerted — no redeploy required.
+
+**2. Invite links are single-recipient, not "anyone with the link."**
+Every invite is created against a specific email address (`forEmail`). When a user signs in with Google, their verified email is checked against the invite before account creation — a leaked or forwarded invite link is useless to anyone but the intended recipient. Invites also remain single-use and expire after 24 hours.
+
+```mermaid
+flowchart LR
+    A[Admin creates invite] -->|forEmail: user@company.com| B[(Invite stored in DB)]
+    B --> C{User signs in with Google}
+    C -->|email matches forEmail| D[✅ Account created]
+    C -->|email does not match| E[❌ INVITE_EMAIL_MISMATCH]
+```
+
+---
 ---
 
 ## 🛠 Tech Stack
@@ -225,6 +249,19 @@ Shift Zero's alerts and recommendations are grounded in real Indian industrial s
 2. Go to **Handover** → Select `CokeOvenBattery-3`
 3. Type: *"Gas level thoda high tha but sab normal hai"*
 4. Submit → Watch the mismatch alert fire with an AI-generated recommendation
+5. Go to **Dashboard** → Click **Download Shift Report PDF**
+6. Go to **Admin Panel → Invites** → generate an invite for a specific email, then try opening it with a different account to see the email-lock in action
+
+### Tested scenarios (DGFASLI-pattern validation)
+
+| Scenario | Note style | Expected result |
+|---|---|---|
+| Calm language, escalating sensor | *"Gas level thoda fluctuate hua tha lekin ab stable hai, routine maintenance chal rahi hai"* | High mismatch score, alert fired |
+| Honest critical reporting | *"Gas levels critically elevated at 85 ppm, exceeding OISD-116 threshold, immediate evacuation recommended"* | Low mismatch score — system correctly recognizes accurate self-reporting |
+| Active permit + risky language | *"Welding work in progress, gas readings slightly high but team says manageable"* | Critical mismatch **and** Hot Work permit conflict flagged against OISD-STD-105 |
+| Normal zone, calm language | Any routine note on a non-escalating zone | No mismatch, no false alert — confirms the system doesn't fire on keywords alone |
+
+This table demonstrates that mismatch detection responds to the *gap between language and sensor data*, not to specific words — an honest critical report scores lower risk than a falsely calm one over real danger.
 
 ---
 
@@ -234,9 +271,19 @@ Shift Zero's alerts and recommendations are grounded in real Indian industrial s
 ```bash
 cd backend
 npm install
-cp .env.example .env   # add GEMINI_API_KEY + MONGODB_URI
+cp .env.example .env
 node server.js
 ```
+
+Required environment variables:
+
+| Variable | Purpose |
+|---|---|
+| `MONGODB_URI` | MongoDB Atlas connection string |
+| `GEMINI_API_KEY` | Gemini API key for NLP risk scoring + recommendations |
+| `JWT_SECRET` | Secret for signing session tokens |
+| `EMAIL_USER` / `EMAIL_PASS` | Sender credentials for critical-alert emails (recipients are *not* configured here — they're pulled from the database at runtime) |
+| `FRONTEND_URL` | Used to build invite links |
 
 ### Frontend
 ```bash
