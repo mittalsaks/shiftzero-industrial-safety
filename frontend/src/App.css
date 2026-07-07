@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+/* Fonts (Inter, JetBrains Mono) are loaded via <link> tags in index.html for faster, non-blocking load */
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 

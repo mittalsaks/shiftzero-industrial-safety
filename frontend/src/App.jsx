@@ -615,7 +615,7 @@ export default function App() {
     { id: 'dashboard', icon: '[=]', label: 'Dashboard' },
     { id: 'handover',  icon: '[~]', label: 'Handover' },
     { id: 'alerts',    icon: '[!]', label: `Alerts${alerts.length > 0 ? ` (${alerts.length})` : ''}` },
-    { id: 'permits',   icon: '[P]', label: `Permits${totalPermitConflicts > 0 ? ` [!]${totalPermitConflicts}` : ''}` },
+    { id: 'permits',   icon: '[P]', label: `Permits${totalPermitConflicts > 0 ? ` [!] ${totalPermitConflicts}` : ''}` },
     { id: 'map',       icon: '[M]', label: 'Plant Map' },
   ];
 

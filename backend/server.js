@@ -123,7 +123,12 @@ function predictTimeToCritical(zoneState) {
   if (trendVelocity <= 0.02) return { minutesToCritical: null, confident: false };
   const remaining = 1.0 - riskLevel;
   const minutesNeeded = Math.round((remaining / trendVelocity * 5) / 60);
-  return { minutesToCritical: Math.max(1, minutesNeeded), confident: trendVelocity > 0.1 };
+  // Only "confident" (i.e. worth surfacing as a CRITICAL-IN-Nmin banner) when the
+  // trend is genuinely rising AND risk is already meaningfully elevated — otherwise
+  // background sensor noise on a calm, nominal zone can randomly cross the old
+  // trendVelocity-only threshold and fire a scary, false "critical soon" badge.
+  const confident = trendVelocity > 0.15 && riskLevel > 0.3;
+  return { minutesToCritical: Math.max(1, minutesNeeded), confident };
 }
 
 function checkPermitConflicts(zoneState) {
