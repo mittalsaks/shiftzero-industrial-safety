@@ -637,6 +637,16 @@ export default function App() {
             <div className="logo-sub">SAFETY INTEL</div>
           </div>
         </div>
+        {user?.isDemo && (
+          <div style={{
+            margin: '0 16px 12px', padding: '4px 10px', borderRadius: 20,
+            background: 'rgba(0,255,180,0.1)', border: '1px solid rgba(0,255,180,0.35)',
+            color: '#00ffb4', fontSize: 9, fontFamily: 'monospace', letterSpacing: 1,
+            textAlign: 'center',
+          }}>
+            ⚡ SANDBOX DEMO MODE
+          </div>
+        )}
         <nav className="sidebar-nav">
           {allTabs.map(item => (
             <button

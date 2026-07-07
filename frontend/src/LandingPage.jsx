@@ -9,6 +9,7 @@ export default function LandingPage({ onLogin }) {
   const [error, setError]               = useState('');
   const [accessDenied, setAccessDenied] = useState(false);
   const [deniedMessage, setDeniedMessage] = useState('');
+  const [demoLoading, setDemoLoading]   = useState(false);
 
   // Read invite token from URL (e.g. ?invite=abc123)
   const inviteToken = new URLSearchParams(window.location.search).get('invite');
@@ -120,6 +121,26 @@ if (!res.ok) {
   });
 
   const handleLogin = () => { setError(''); googleLogin(); };
+
+  const handleDemoLogin = async () => {
+    setError('');
+    setDemoLoading(true);
+    try {
+      const res = await fetch(`${import.meta.env.VITE_BACKEND_URL}/api/auth/demo`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.message || 'Could not start demo session');
+
+      localStorage.setItem('authToken', data.token);
+      onLogin(data.user);
+    } catch (err) {
+      setError(err.message || 'Something went wrong. Please try again.');
+    } finally {
+      setDemoLoading(false);
+    }
+  };
 
   // ── Access Denied Screen ──────────────────────────────────────────────────
   if (accessDenied) return (
@@ -258,6 +279,43 @@ if (!res.ok) {
             </>
           )}
         </button>
+
+        {!inviteToken && (
+          <>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, margin: '18px 0', width: 260 }}>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+              <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: 10, fontFamily: 'monospace', letterSpacing: 1 }}>OR</span>
+              <div style={{ flex: 1, height: 1, background: 'rgba(255,255,255,0.1)' }} />
+            </div>
+
+            <button
+              onClick={handleDemoLogin}
+              disabled={demoLoading}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 10, justifyContent: 'center',
+                padding: '13px 32px', borderRadius: 10, minWidth: 260,
+                background: demoLoading ? 'rgba(0,255,180,0.12)' : 'transparent',
+                border: '1px dashed rgba(0,255,180,0.45)', color: '#00ffb4',
+                fontSize: 14, fontWeight: 500, cursor: demoLoading ? 'wait' : 'pointer',
+                fontFamily: 'monospace', letterSpacing: 0.5, transition: 'all 0.2s',
+              }}
+              onMouseEnter={e => { if (!demoLoading) e.currentTarget.style.background = 'rgba(0,255,180,0.08)'; }}
+              onMouseLeave={e => { e.currentTarget.style.background = demoLoading ? 'rgba(0,255,180,0.12)' : 'transparent'; }}
+            >
+              {demoLoading ? (
+                <>
+                  <div style={{ width: 14, height: 14, border: '2px solid rgba(0,255,180,0.3)', borderTop: '2px solid #00ffb4', borderRadius: '50%', animation: 'spin 0.8s linear infinite' }} />
+                  LOADING DEMO...
+                </>
+              ) : (
+                <>⚡ Explore Live Demo — No Sign-in Required</>
+              )}
+            </button>
+            <p style={{ color: 'rgba(255,255,255,0.22)', fontSize: 10, marginTop: 8, fontFamily: 'monospace', letterSpacing: 0.5, textAlign: 'center', maxWidth: 300 }}>
+              Instant access to a sandboxed demo org — full dashboard, alerts, permits &amp; admin panel
+            </p>
+          </>
+        )}
 
         {error && (
           <p style={{ color: '#ff003c', fontSize: 13, marginTop: 14, fontFamily: 'monospace', letterSpacing: 0.5, textAlign: 'center', maxWidth: 380 }}>

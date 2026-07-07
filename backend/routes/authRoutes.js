@@ -148,6 +148,64 @@ router.post('/google', async (req, res) => {
   }
 });
 
+// ── POST /api/auth/demo — instant guest access, no Google login / invite needed ──
+// Lets anyone (e.g. an interviewer/recruiter evaluating the live demo) explore the
+// full product in one click. Guests land in their own isolated "Demo Org" as an
+// admin, so they can see every tab (including Admin Panel + Invites) without ever
+// touching a real company's data, users, or audit trail.
+router.post('/demo', async (req, res) => {
+  try {
+    const DEMO_DOMAIN = 'demo:shiftzero-showcase';
+
+    let company = await Company.findOne({ domain: DEMO_DOMAIN });
+    if (!company) {
+      company = await Company.create({
+        name: 'Demo Org (Sandbox)',
+        domain: DEMO_DOMAIN,
+        createdBy: 'system@shiftzero.demo',
+      });
+    }
+
+    // Housekeeping: drop guest accounts older than 24h so the DB doesn't
+    // accumulate throwaway users from every demo visitor.
+    User.deleteMany({
+      email: { $regex: /^guest-.*@demo\.shiftzero\.local$/ },
+      createdAt: { $lt: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+    }).catch(() => {});
+
+    const suffix = crypto.randomBytes(4).toString('hex');
+    const guestEmail = `guest-${suffix}@demo.shiftzero.local`;
+    const guestName  = `Guest Reviewer ${suffix.slice(0, 4).toUpperCase()}`;
+
+    const user = await User.create({
+      name: guestName,
+      email: guestEmail,
+      avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(guestName)}&background=00ffb4&color=041b14&bold=true`,
+      role: 'admin', // full feature access, but scoped to the isolated Demo Org only
+      companyId: company._id,
+    });
+
+    await AuditLog.create({
+      companyId: company._id, actorEmail: guestEmail, actorRole: 'admin',
+      action: 'DEMO_GUEST_LOGIN', details: { auto: true },
+    });
+
+    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '12h' });
+    res.json({
+      token,
+      user: {
+        id: user._id, name: user.name, email: user.email,
+        avatar: user.avatar, role: 'admin',
+        companyId: company._id, companyName: company.name,
+        isSuperAdmin: false, isDemo: true,
+      },
+    });
+  } catch (err) {
+    console.error('Demo login error:', err);
+    res.status(500).json({ message: 'Could not start demo session' });
+  }
+});
+
 // ── POST /api/auth/invite — admin generates invite ───────────────────────────
 router.post('/invite', requireAuth, requireAdmin, async (req, res) => {
   try {

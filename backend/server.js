@@ -203,7 +203,8 @@ app.post('/api/handover', requireAuth, async (req, res) => {
       timestamp: new Date().toISOString()
     };
     io.emit('alert', { zone, alert: zoneState.alert });
-    sendCriticalAlert(zone, zoneState.alert, req.user); // ✅ email
+    const isDemoUser = (req.user.email || '').endsWith('@demo.shiftzero.local');
+    if (!isDemoUser) sendCriticalAlert(zone, zoneState.alert, req.user); // ✅ email (skip for sandbox demo guests)
     AlertModel.create({ zone, ...zoneState.alert }).catch(err =>
       console.error('Alert save failed:', err.message)
     );
