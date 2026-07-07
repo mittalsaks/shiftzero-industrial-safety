@@ -71,16 +71,17 @@ In parallel, **Permit-to-Work data is cross-checked against live sensors** — e
 | 🔴 **Verbal-Sensor Mismatch Detection** | NLP risk-scoring of handover notes cross-checked against live sensor risk |
 | ⚡ **Real-time Socket Updates** | Sensor data streamed every 5 seconds via Socket.IO |
 | 📈 **Sparkline Trend Charts** | Per-zone gas concentration & risk-score history |
-| ⏱ **Time-to-Critical Prediction** | "CRITICAL IN ~1min" — predicted from live trend velocity |
+| ⏱ **Time-to-Critical Prediction** | "CRITICAL IN ~1min" — predicted from live trend velocity, only surfaced once risk is genuinely elevated (filters out sensor noise on nominal zones) |
 | 🔒 **Permit-to-Work Management** | Issue, track, and close permits with automatic conflict detection |
 | 🗺 **Animated Plant Map** | Live geospatial view with pipeline/feed-line flow and zone risk overlays |
 | 🤖 **RAG Incident Engine** | TF-IDF retrieval over a synthetic incident corpus + Gemini-generated recommendations |
-| 📋 **Incident Corpus** | OISD / DGFASLI / Vizag-pattern synthetic incident library for grounding AI advice |
 | 📋 **Incident Corpus** | OISD / DGFASLI / Vizag-pattern synthetic incident library for grounding AI advice |
 | 📄 **PDF Shift Reports** | One-click downloadable shift report — alerts, handover log, and permit status, generated server-side with PDFKit |
 | 🔍 **Audit Trail** | Every handover note is permanently linked to the submitting user (name, email, user ID) for accountability |
 | 📧 **Dynamic Critical-Alert Emails** | On a CRITICAL mismatch, an email is sent automatically to all current admins — fetched live from the database, never hardcoded |
 | 🔐 **Email-Locked Invites** | Invite links are bound to a specific email address at creation time — even if a link leaks, only the intended recipient can use it |
+| ⚡ **No-Login Demo Access** | One-click "Explore Live Demo" — instantly drops any visitor into a full, isolated sandbox org (dashboard, alerts, permits, admin panel) with zero setup, so anyone evaluating the product can see it working in seconds |
+
 ---
 
 ## 🏗 System Architecture
@@ -152,13 +153,16 @@ sequenceDiagram
 
 ## 🔐 Security Design
 
-Shift Zero treats two common SaaS security gaps as first-class problems, not afterthoughts:
+Shift Zero treats common SaaS security gaps as first-class problems, not afterthoughts:
 
 **1. No hardcoded alert recipients.**
 Early versions of critical-alert emails pointed at a fixed address in `.env`. This was replaced with a live query — every time a CRITICAL mismatch fires, the backend pulls the current list of `admin` / `super_admin` users directly from MongoDB and emails all of them. Adding, removing, or promoting an admin instantly changes who gets alerted — no redeploy required.
 
 **2. Invite links are single-recipient, not "anyone with the link."**
 Every invite is created against a specific email address (`forEmail`). When a user signs in with Google, their verified email is checked against the invite before account creation — a leaked or forwarded invite link is useless to anyone but the intended recipient. Invites also remain single-use and expire after 24 hours.
+
+**3. Demo access is sandboxed, never mixed with real tenant data.**
+The "Explore Live Demo" button creates a fresh guest account scoped to its own isolated Demo Org — it can never read, write, or touch a real company's users, permits, or handover history. Demo-triggered mismatches also never fire the real critical-alert email, so evaluators can freely explore without generating noise for real admins. Stale guest accounts are auto-purged after 24 hours.
 
 ```mermaid
 flowchart LR
@@ -168,7 +172,6 @@ flowchart LR
     C -->|email does not match| E[❌ INVITE_EMAIL_MISMATCH]
 ```
 
----
 ---
 
 ## 🛠 Tech Stack
@@ -195,7 +198,7 @@ flowchart LR
 ## 📸 Product Walkthrough
 
 ### 1. Landing Page
-The entry point — branding, key stats (6,500+ fatal accidents/yr, <10min alert target, 4 live zones, real-time fusion), and Google login.
+The entry point — branding, key stats (6,500+ fatal accidents/yr, <10min alert target, 4 live zones, real-time fusion), Google login, and a one-click **"Explore Live Demo"** option for anyone who wants to try the product with zero setup.
 
 ![Landing Page](https://raw.githubusercontent.com/mittalsaks/shiftzero-industrial-safety/main/Images/LandingPage.png)
 
@@ -241,7 +244,12 @@ Shift Zero's alerts and recommendations are grounded in real Indian industrial s
 
 🔗 **[shift-zero-frontend.onrender.com](https://shift-zero-frontend.onrender.com)**
 
-**Demo flow:**
+### Fastest way to try it — no sign-in required
+1. Open the live link
+2. Click **"⚡ Explore Live Demo — No Sign-in Required"**
+3. You're instantly in the dashboard as an admin in an isolated sandbox org — no Google account, no invite needed
+
+### Full walkthrough (either demo mode or your own Google account + invite)
 1. Login → Dashboard (live sensor data streaming)
 2. Go to **Handover** → Select `CokeOvenBattery-3`
 3. Type: *"Gas level thoda high tha but sab normal hai"*
