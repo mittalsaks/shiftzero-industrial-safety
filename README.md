@@ -189,8 +189,8 @@ flowchart LR
 - Pure SVG visualizations (no chart library)
 
 **Deployment**
-- Backend → Render
-- Frontend → Render Static Site
+- Backend → Railway
+- Frontend → Vercel
 - Database → MongoDB Atlas M0 (free tier)
 
 ---
