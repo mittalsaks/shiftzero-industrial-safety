@@ -5,7 +5,7 @@
 ### AI-Powered Industrial Safety Intelligence Platform
 **Verbal-Sensor Mismatch Intelligence Platform**
 
-[![Live Demo](https://img.shields.io/badge/Live%20Demo-shift--zero--frontend.onrender.com-00C896?style=for-the-badge)](https://shift-zero-frontend.onrender.com)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-shiftzero--industrial--safety.vercel.app-00C896?style=for-the-badge)](https://shiftzero-industrial-safety.vercel.app)
 
 <br/>
 
@@ -242,7 +242,8 @@ Shift Zero's alerts and recommendations are grounded in real Indian industrial s
 
 ## 🌐 Live Demo
 
-**Live Demo:** https://shiftzero-industrial-safety.vercel.app
+- **Live Demo:** https://shiftzero-industrial-safety.vercel.app
+- **Backend API:** https://shiftzero-industrial-safety-production.up.railway.app
 
 ### Fastest way to try it — no sign-in required
 1. Open the live link
