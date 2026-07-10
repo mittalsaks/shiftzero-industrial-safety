@@ -242,7 +242,7 @@ Shift Zero's alerts and recommendations are grounded in real Indian industrial s
 
 ## 🌐 Live Demo
 
-🔗 **[shift-zero-frontend.onrender.com](https://shift-zero-frontend.onrender.com)**
+**Live Demo:** https://shiftzero-industrial-safety.vercel.app
 
 ### Fastest way to try it — no sign-in required
 1. Open the live link
