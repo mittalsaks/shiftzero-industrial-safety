@@ -38,26 +38,24 @@ The outgoing supervisor says **everything is fine**, while the **sensors are alr
 
 ### Core Innovation: Verbal-Sensor Mismatch Detection
 
-```
-Supervisor writes handover note
-        │
-        ▼
-Gemini AI scores risk-language (0 → 1)
-        │
-        ▼
-Compared against LIVE sensor risk score for that zone
-        │
-        ▼
-   Note calm + Sensors escalating?
-        │
-   ┌────┴─────┐
-   │   YES    │   →  🔴 MISMATCH ALERT fired
-   └────┬─────┘
-        ▼
-RAG engine retrieves similar past incidents
-        │
-        ▼
-Gemini generates a specific, actionable recommendation
+```mermaid
+flowchart TD
+    A[📝 Supervisor writes handover note] --> B[🤖 Gemini AI scores risk-language 0 → 1]
+    B --> C[📡 Compared against LIVE sensor risk score for that zone]
+    C --> D{Note calm +<br/>Sensors escalating?}
+    D -->|YES| E[🔴 MISMATCH ALERT fired]
+    D -->|NO| F[✅ No alert — all clear]
+    E --> G[🔍 RAG engine retrieves similar past incidents]
+    G --> H[💡 Gemini generates a specific, actionable recommendation]
+
+    style A fill:#0d1117,stroke:#4285F4,color:#ffffff
+    style B fill:#0d1117,stroke:#4285F4,color:#ffffff
+    style C fill:#0d1117,stroke:#4285F4,color:#ffffff
+    style D fill:#0d1117,stroke:#f0883e,color:#ffffff
+    style E fill:#2d0a0a,stroke:#ff4d4d,color:#ffffff
+    style F fill:#0a2d0a,stroke:#00C896,color:#ffffff
+    style G fill:#0d1117,stroke:#4285F4,color:#ffffff
+    style H fill:#0d1117,stroke:#00C896,color:#ffffff
 ```
 
 In parallel, **Permit-to-Work data is cross-checked against live sensors** — e.g. a Hot Work permit active in a zone where gas concentration has crossed a danger threshold triggers an **immediate Permit Conflict alert**, citing the relevant OISD standard.
