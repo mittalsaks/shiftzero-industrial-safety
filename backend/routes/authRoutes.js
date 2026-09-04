@@ -7,6 +7,8 @@ const Invite   = require('../models/Invite');
 const Company  = require('../models/Company');
 const AuditLog = require('../models/AuditLog');
 const { requireAuth, requireAdmin } = require('../middleware/authMiddleware');
+const { hashPassword, verifyPassword } = require('../utils/password');
+const { sendMail } = require('../mailer');
 
 const router = express.Router();
 
@@ -145,6 +147,127 @@ router.post('/google', async (req, res) => {
   } catch (err) {
     console.error('Google auth error:', err);
     res.status(500).json({ message: 'Server error during authentication' });
+  }
+});
+
+// ── POST /api/auth/register-org ───────────────────────────────────────────────
+// An admin registers a brand-new, fully isolated organization. This account is
+// scoped as 'admin' to its own companyId only — never super_admin — so every
+// org created this way is walled off from every other org from the start.
+router.post('/register-org', async (req, res) => {
+  try {
+    const { orgName, adminName, adminEmail, password } = req.body;
+    if (!orgName || !adminName || !adminEmail || !password)
+      return res.status(400).json({ message: 'orgName, adminName, adminEmail and password are required' });
+    if (password.length < 8)
+      return res.status(400).json({ message: 'Password must be at least 8 characters' });
+
+    const normalizedEmail = adminEmail.toLowerCase().trim();
+    const existing = await User.findOne({ email: normalizedEmail });
+    if (existing) return res.status(400).json({ message: 'This email is already registered' });
+
+    const domainSlug = `org:${orgName.toLowerCase().trim().replace(/\s+/g, '-')}-${crypto.randomBytes(3).toString('hex')}`;
+    const company = await Company.create({ name: orgName.trim(), domain: domainSlug, createdBy: normalizedEmail });
+
+    const user = await User.create({
+      name: adminName.trim(), email: normalizedEmail,
+      password: hashPassword(password),
+      role: 'admin', status: 'active', companyId: company._id,
+    });
+
+    await AuditLog.create({
+      companyId: company._id, actorEmail: normalizedEmail, actorRole: 'admin',
+      action: 'ORG_REGISTERED', details: { companyName: company.name },
+    });
+
+    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({
+      token,
+      user: {
+        id: user._id, name: user.name, email: user.email,
+        avatar: user.avatar, role: 'admin',
+        companyId: company._id, companyName: company.name,
+        isSuperAdmin: false,
+      },
+    });
+  } catch (err) {
+    console.error('Register org error:', err);
+    res.status(500).json({ message: 'Failed to register organization' });
+  }
+});
+
+// ── POST /api/auth/login ──────────────────────────────────────────────────────
+// Email/password login. Also doubles as "accept invite": an invited member's
+// account starts as status='pending' with a temp password emailed to them; the
+// moment that login succeeds, the account flips to 'active' and every admin in
+// that org gets a notification email.
+router.post('/login', async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (!email || !password) return res.status(400).json({ message: 'email and password required' });
+
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user || !user.password || !verifyPassword(password, user.password))
+      return res.status(401).json({ message: 'Invalid email or password' });
+
+    const wasPending = user.status === 'pending';
+    if (wasPending) {
+      user.status = 'active';
+      await user.save();
+
+      const company = user.companyId ? await Company.findById(user.companyId).lean() : null;
+      const admins = await User.find({
+        companyId: user.companyId, role: { $in: ['admin', 'super_admin'] }, email: { $ne: user.email },
+      }).select('email').lean();
+
+      if (admins.length > 0) {
+        await sendMail({
+          to: admins.map(a => a.email).join(', '),
+          subject: `✅ ${user.name} accepted your ShiftZero invite`,
+          html: `
+            <div style="font-family:monospace;background:#020b14;color:#00ffb4;padding:24px;border-radius:8px">
+              <p><b>${user.name}</b> (${user.email}) has accepted the invite and joined
+              <b>${company?.name || 'your organization'}</b> as <b>${user.role}</b>.</p>
+            </div>
+          `,
+        });
+      }
+
+      await AuditLog.create({
+        companyId: user.companyId, actorEmail: user.email, actorRole: user.role,
+        action: 'TEAM_MEMBER_ACCEPTED_INVITE', details: {},
+      });
+    }
+
+    const company = user.companyId ? await Company.findById(user.companyId).lean() : null;
+    const token = jwt.sign({ userId: user._id, email: user.email }, process.env.JWT_SECRET, { expiresIn: '7d' });
+    res.json({
+      token,
+      justAccepted: wasPending,
+      user: {
+        id: user._id, name: user.name, email: user.email,
+        avatar: user.avatar, role: user.role,
+        companyId: user.companyId, companyName: company?.name || null,
+        isSuperAdmin: user.role === 'super_admin',
+      },
+    });
+  } catch (err) {
+    console.error('Login error:', err);
+    res.status(500).json({ message: 'Login failed' });
+  }
+});
+
+// ── POST /api/auth/change-password ────────────────────────────────────────────
+router.post('/change-password', requireAuth, async (req, res) => {
+  try {
+    const { newPassword } = req.body;
+    if (!newPassword || newPassword.length < 8)
+      return res.status(400).json({ message: 'New password must be at least 8 characters' });
+    await User.findByIdAndUpdate(req.user._id, { password: hashPassword(newPassword) });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to change password' });
   }
 });
 

@@ -7,6 +7,9 @@ const userSchema = new mongoose.Schema(
     email:     { type: String, required: true, unique: true },
     avatar:    String,
     googleId:  String,
+    password:  { type: String, default: null },   // hashed; null for Google-only accounts
+    status:    { type: String, enum: ['pending', 'active'], default: 'active' }, // 'pending' until invited member logs in
+    invitedBy: { type: String, default: null },
     role: {
       type:    String,
       enum:    ['super_admin', 'admin', 'safety_officer', 'operator'],

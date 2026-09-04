@@ -1,59 +1,63 @@
 // Synthetic incident corpus for RAG retrieval.
-// Records are modeled on the PATTERN STRUCTURE of real, publicly reported
-// Indian industrial incidents (DGFASLI fatal accident statistics, OISD
-// incident bulletins, and the publicly reported investigation findings on
-// the Jan 2025 Visakhapatnam Steel Plant coke oven battery explosion).
-// Specific identifying details have been generalized — this is a synthetic
-// training/demo corpus, not a copy of any single confidential report.
+//
+// PART 5 — genericized. The original corpus was modeled tightly on steel-plant
+// incidents (coke ovens, blast furnaces). Shift Zero now serves any industry
+// an admin defines zones for — a warehouse, a hospital ward, a construction
+// site, a data center, a retail floor — so the corpus is rewritten around
+// FAILURE PATTERNS that recur across industries, not one industry's
+// equipment. `industryExamples` shows how the same pattern shows up in
+// different settings so the AI recommendation stays concrete regardless of
+// what the admin named their zones or which metrics they track.
 
 const incidents = [
   {
     id: 'INC-001',
-    title: 'Coke oven gas accumulation preceded by downplayed handover note',
-    summary: 'Gas pressure sensors at a coke oven battery showed a rising trend over several hours. Shift handover notes described the readings as routine and within normal variation. No escalation was raised until a sudden explosion occurred during confined maintenance work. Post-incident review found the verbal characterization of the readings did not match the sensor trend at handover time.',
-    regulatoryReference: 'OISD-STD-222 (Coke Oven Safety), Factory Act Section 7A (Safety Officer duties)',
-    recommendedAction: 'Immediately escalate to safety officer and halt any permit-to-work activity in the zone; cross-verify the most recent sensor trend against the handover language before accepting the shift; do not rely on verbal reassurance alone when sensor trend velocity exceeds baseline.',
-    tags: ['gas accumulation', 'coke oven', 'handover mismatch', 'confined space', 'explosion']
+    title: 'Rising risk trend described as routine in handover notes',
+    summary: 'A monitored condition (a gas/temperature reading, a queue length, a patient vital, an equipment vibration) climbed steadily over several hours. Shift handover notes described it as normal variation each time. No escalation was raised until the condition crossed a critical threshold, at which point the gap between what was logged and what was actually trending was discovered.',
+    regulatoryReference: "Applicable industry safety/quality SOP on trend-based escalation — check your organization's own policy",
+    recommendedAction: 'Escalate to the on-duty supervisor and pause activity in the zone until the reading is independently re-checked; cross-verify the most recent numeric trend against the handover language before accepting the shift.',
+    tags: ['rising trend', 'handover mismatch', 'downplayed risk', 'shift changeover'],
+    industryExamples: ['manufacturing gas/temp sensor', 'hospital vital-signs monitor', 'warehouse conveyor vibration', 'data center rack temperature']
   },
   {
     id: 'INC-002',
-    title: 'Hot work permit issued near elevated gas reading zone',
-    summary: 'A hot work permit was approved for an area within close proximity to a zone showing elevated combustible gas readings. The permit approval process did not cross-check live gas sensor data against the work location. The combination of an active ignition source and elevated gas concentration created a high-risk condition that went undetected until a near-miss was reported by a worker.',
-    regulatoryReference: 'OISD-STD-105 (Permit to Work), PESO guidelines on hot work near hazardous areas',
-    recommendedAction: 'Suspend the hot work permit immediately; require a fresh gas test before work resumes; flag the permit-issuing process for review since no geofencing/cross-check exists against live gas readings.',
-    tags: ['permit conflict', 'hot work', 'gas reading', 'near miss']
+    title: 'Work authorized near a zone already showing elevated risk',
+    summary: 'A work permit, access grant, or task assignment was approved for a zone (or one adjacent to it) that was already showing an elevated reading, without cross-checking the zone\'s live status at approval time. The combination of active work and elevated risk created a hazardous condition that went undetected until a near-miss was reported.',
+    regulatoryReference: "Your organization's permit-to-work / access-control policy",
+    recommendedAction: 'Suspend the permit or access grant immediately; require a fresh status check on the zone before work resumes; flag the approval process for review since no automatic check exists against the zone\'s live status.',
+    tags: ['permit conflict', 'access conflict', 'elevated risk', 'near miss']
   },
   {
     id: 'INC-003',
-    title: 'Shift changeover communication gap before equipment failure',
-    summary: 'A piece of rotating equipment showed early vibration anomalies noted informally by the outgoing shift but not formally logged or flagged as urgent. The incoming shift treated the verbal mention as low priority. The equipment failed catastrophically six hours later, causing a partial production stoppage and a minor injury.',
-    regulatoryReference: 'Factory Act Section 7A, ISO 55000 Asset Management principles',
-    recommendedAction: 'Treat informal verbal mentions of equipment anomalies as triggers for formal inspection, not just discussion; require vibration/thermal baseline comparison before shift sign-off.',
-    tags: ['equipment failure', 'shift handover', 'vibration anomaly', 'informal communication']
+    title: 'Shift changeover communication gap before a failure',
+    summary: 'An early anomaly (unusual noise, a minor error-rate uptick, an odd smell, a small delay) was mentioned informally by the outgoing shift but not formally logged or flagged as urgent. The incoming shift treated the verbal mention as low priority, and the underlying issue escalated into a more serious failure hours later.',
+    regulatoryReference: 'Shift handover / changeover documentation policy',
+    recommendedAction: 'Treat informal verbal mentions of anomalies as triggers for a formal check, not just discussion; require a baseline comparison (readings, logs, or inspection) before shift sign-off rather than accepting a verbal "it\'s fine."',
+    tags: ['equipment failure', 'shift handover', 'informal communication', 'anomaly']
   },
   {
     id: 'INC-004',
-    title: 'Confined space entry during abnormal process conditions',
-    summary: 'Workers entered a confined space for routine inspection while upstream process conditions were in an abnormal state (elevated temperature and pressure). The entry permit was approved based on standard checklist completion without verifying real-time process telemetry. No injury occurred, but a CAPA (corrective and preventive action) was raised after the deviation was discovered in a routine audit.',
-    regulatoryReference: 'OISD-STD-222, DGMS confined space entry norms',
-    recommendedAction: 'Block confined space entry approval when upstream process telemetry shows abnormal deviation; require a live telemetry check as a mandatory permit gate, not just a checklist item.',
-    tags: ['confined space', 'abnormal process condition', 'permit approval', 'CAPA']
+    title: 'Entry or access approved during an abnormal condition',
+    summary: 'Personnel entered or accessed a zone for routine work while an upstream or related condition was in an abnormal state, because approval was based on a standard checklist rather than the zone\'s real-time status. No injury or loss occurred, but the deviation was flagged in a later audit.',
+    regulatoryReference: 'Restricted-access / confined-entry norms applicable to your industry',
+    recommendedAction: 'Block entry or access approval when the zone\'s live status shows an abnormal deviation; require a real-time status check as a mandatory approval gate, not just a checklist item.',
+    tags: ['abnormal condition', 'access approval', 'checklist gap']
   },
   {
     id: 'INC-005',
-    title: 'Near-miss pattern across multiple shifts not aggregated',
-    summary: 'Three separate near-miss reports across different shifts over two weeks each individually appeared minor, but together described an escalating equipment degradation pattern. Because near-miss reports were filed independently without cross-shift aggregation, the pattern was not recognized until a fourth, more serious incident occurred.',
-    regulatoryReference: 'OISD-GDN-206 (Near-Miss Reporting and Analysis)',
-    recommendedAction: 'Aggregate near-miss reports across shifts for the same equipment/zone within a rolling time window; flag clusters of 3+ related near-misses for proactive inspection rather than waiting for a major incident.',
-    tags: ['near miss', 'pattern recognition', 'cross-shift', 'equipment degradation']
+    title: 'Recurring minor incidents not connected across shifts',
+    summary: 'Several separate minor incident or near-miss reports across different shifts over a short period each individually appeared low priority, but together described an escalating pattern in the same zone. Because reports were filed independently without cross-shift aggregation, the pattern was not recognized until a more serious incident occurred.',
+    regulatoryReference: 'Near-miss / incident aggregation and trend-review policy',
+    recommendedAction: 'Aggregate minor incident/near-miss reports for the same zone within a rolling time window; flag clusters of 3 or more related reports for proactive review rather than waiting for a major incident.',
+    tags: ['near miss', 'pattern recognition', 'cross-shift', 'recurring issue']
   },
   {
     id: 'INC-006',
-    title: 'Sensor data present but not connected to operational decision',
-    summary: 'A facility with functioning gas detectors, SCADA, and permit-to-work systems experienced a fatal incident. Post-incident review found that all relevant sensor data existed and had in fact crossed informal concern thresholds, but no system or process connected that data to an operational decision (e.g. evacuation, work stoppage) before the incident occurred.',
-    regulatoryReference: 'DGFASLI annual fatal accident review findings, Factory Act Section 7A',
-    recommendedAction: 'This is the precise failure mode Shift Zero is built to close: route any sensor trend that exceeds informal concern thresholds directly into an operational alert, regardless of whether a human has verbally flagged it yet.',
-    tags: ['data unacted upon', 'fatal incident', 'sensor SCADA gap', 'systemic failure']
+    title: 'Monitoring data existed but was never connected to a decision',
+    summary: 'A team had functioning monitoring in place (sensors, dashboards, status logs), and a post-incident review found the relevant data had crossed an informal concern threshold well before the incident — but no process connected that data to an operational decision (stopping work, escalating, reassigning staff) before it happened.',
+    regulatoryReference: 'General duty of care / operational risk-management principles applicable to your industry',
+    recommendedAction: 'This is the precise failure mode a verbal-status mismatch alert is built to close: route any status or reading that crosses a concern threshold directly into an operational alert, regardless of whether a person has verbally flagged it yet.',
+    tags: ['data unacted upon', 'systemic failure', 'monitoring gap']
   }
 ];
 

@@ -2,6 +2,13 @@
 // retrieve the most relevant historical/synthetic incident records and use
 // the Gemini API to generate a grounded, actionable recommendation citing them.
 //
+// PART 5 — genericized. Previously written assuming an "industrial plant" and
+// referencing steel-plant-specific incident language directly. Now works for
+// any zone in any industry: the prompt no longer assumes a plant/factory
+// setting, and takes an optional `zoneContext` (e.g. the zone's configured
+// metric labels) so the recommendation can reference the actual metrics an
+// admin chose to track instead of assuming gas/temperature.
+//
 // Retrieval step uses TF-IDF cosine similarity (via `natural`) — fast, free,
 // runs entirely locally, no embedding API call needed for retrieval itself.
 // Generation step calls the Gemini API, with a non-LLM fallback so the demo
@@ -30,18 +37,22 @@ function retrieveTopIncidents(queryText, topN = 2) {
 
 function fallbackRecommendation(zone, handoverText, matched) {
   if (matched.length === 0) {
-    return 'No closely matching historical pattern found. Escalate to safety officer for manual review given the verbal-sensor mismatch.';
+    return 'No closely matching historical pattern found. Escalate to the on-duty supervisor for manual review given the status-vs-reading mismatch.';
   }
   const top = matched[0];
   return `This pattern resembles "${top.title}" (${top.id}). Recommended action: ${top.recommendedAction}`;
 }
 
-const RECOMMENDATION_SYSTEM_PROMPT = `You are a safety recommendation assistant for an industrial plant.
-You are given: a zone name, a shift-handover note that shows a verbal-sensor mismatch (the note sounds calm
-but live sensors show escalating risk), and 1-2 retrieved historical/incident records that resemble this
-pattern. Write a short, concrete, actionable recommendation (2-3 sentences max) for the on-duty safety
-officer. Reference the matched incident ID(s) explicitly. Be specific and operational, not generic.
-Do not add disclaimers or hedge excessively — this is for a control-room alert, not a report.`;
+// Industry-agnostic system prompt. `zoneContext` (optional) is a short string
+// like "tracked metrics: Gas (ppm), Temp (°C)" or "tracked metrics: Occupancy,
+// Noise (dB)" built from the zone's own metricConfig, so the model grounds
+// its recommendation in whatever that specific zone actually measures.
+function buildSystemPrompt(zoneContext) {
+  return `You are a safety/operations recommendation assistant used across many industries (manufacturing, warehousing, healthcare, construction, data centers, retail, and others).
+You are given: a zone name${zoneContext ? ' (with its tracked metrics)' : ''}, a shift-handover note that shows a mismatch between what the note says and what the zone's readings/status actually indicate, and 1-2 retrieved incident records that resemble this pattern from other organizations.
+Write a short, concrete, actionable recommendation (2-3 sentences max) for the on-duty supervisor or safety officer. Reference the matched incident ID(s) explicitly. Be specific and operational for THIS zone and industry — do not assume it is a factory, plant, or any single specific setting unless the zone name or metrics make that clear.
+Do not add disclaimers or hedge excessively — this is for a live operational alert, not a report.`;
+}
 
 function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -91,7 +102,7 @@ async function tryWithKey(apiKey, userMessage) {
   return text;
 }
 
-async function generateRecommendation(zone, handoverText, matchedIncidents) {
+async function generateRecommendation(zone, handoverText, matchedIncidents, zoneContext) {
   const apiKey = process.env.GEMINI_API_KEY;
   const backupKey = process.env.GEMINI_API_KEY_BACKUP;
 
@@ -100,10 +111,10 @@ async function generateRecommendation(zone, handoverText, matchedIncidents) {
   }
 
   const context = matchedIncidents
-    .map(inc => `[${inc.id}] ${inc.title}\nSummary: ${inc.summary}\nRegulatory ref: ${inc.regulatoryReference}\nKnown recommended action: ${inc.recommendedAction}`)
+    .map(inc => `[${inc.id}] ${inc.title}\nSummary: ${inc.summary}\nReference: ${inc.regulatoryReference}\nKnown recommended action: ${inc.recommendedAction}`)
     .join('\n\n');
 
-  const userMessage = `${RECOMMENDATION_SYSTEM_PROMPT}\n\nZone: ${zone}\nHandover note: "${handoverText}"\n\nRetrieved matching incidents:\n${context}\n\nWrite a short, concrete, actionable recommendation (2-3 sentences) for the on-duty safety officer. Reference the matched incident ID(s) explicitly. Be specific and operational.`;
+  const userMessage = `${buildSystemPrompt(zoneContext)}\n\nZone: ${zone}${zoneContext ? `\nZone context: ${zoneContext}` : ''}\nHandover note: "${handoverText}"\n\nRetrieved matching incidents:\n${context}\n\nWrite a short, concrete, actionable recommendation (2-3 sentences) for the on-duty supervisor. Reference the matched incident ID(s) explicitly. Be specific and operational.`;
 
   try {
     return await tryWithKey(apiKey, userMessage);
@@ -121,9 +132,13 @@ async function generateRecommendation(zone, handoverText, matchedIncidents) {
   }
 }
 
-async function getIncidentBackedRecommendation(zone, handoverText) {
+// `zoneContext` is optional — pass a short human-readable string built from
+// the zone's metricConfig (e.g. "tracked metrics: Gas (ppm), Temp (°C)") so
+// the recommendation is grounded in what this specific zone measures. Callers
+// that don't have it (or don't need it) can omit it entirely.
+async function getIncidentBackedRecommendation(zone, handoverText, zoneContext = '') {
   const matched = retrieveTopIncidents(handoverText + ' ' + zone, 2);
-  const recommendation = await generateRecommendation(zone, handoverText, matched);
+  const recommendation = await generateRecommendation(zone, handoverText, matched, zoneContext);
   return {
     matchedIncidents: matched.map(m => ({ id: m.id, title: m.title, regulatoryReference: m.regulatoryReference })),
     recommendation
